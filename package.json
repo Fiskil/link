@@ -1,0 +1,36 @@
+{
+  "name": "@fiskil/link",
+  "version": "0.1.0",
+  "description": "Minimal TypeScript SDK for creating Fiskil auth sessions (redirect or iframe).",
+  "license": "MIT",
+  "type": "module",
+  "module": "dist/fiskil-link.mjs",
+  "types": "dist/fiskil-link.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/fiskil-link.d.ts",
+      "import": "./dist/fiskil-link.mjs"
+    }
+  },
+  "unpkg": "dist/fiskil-link.umd.js",
+  "jsdelivr": "dist/fiskil-link.umd.js",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5",
+    "@types/node": "^22.5.4",
+    "@types/jsdom": "^21.1.7",
+    "rimraf": "^6.0.1"
+  }
+}
