@@ -1,5 +1,8 @@
 ## Fiskil Link SDK (`@fiskil/link`)
 
+[![Tests](https://github.com/fiskil/link-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/fiskil/link-sdk/actions/workflows/test.yml)
+[![npm version](https://img.shields.io/npm/v/@fiskil/link.svg)](https://www.npmjs.com/package/@fiskil/link)
+
 Minimal, strictly-typed SDK to embed Fiskil Link via an iframe. Promise-based API. Ships ESM and UMD builds.
 
 ## Install
