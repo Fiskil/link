@@ -2,7 +2,7 @@
   "name": "@fiskil/link",
   "version": "v0.1.4-beta",
   "description": "Minimal TypeScript SDK for creating Fiskil auth sessions (redirect or iframe).",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE.md",
   "type": "module",
   "module": "dist/fiskil-link.mjs",
   "types": "dist/fiskil-link.d.ts",
