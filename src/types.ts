@@ -5,6 +5,8 @@ export const fiskilErrors = [
   'CONSENT_ENDUSER_INELIGIBLE',
   'CONSENT_TIMEOUT',
   'CONSUMERDATA_PROCESSING_ERROR',
+  'AUTH_SESSION_NOT_FOUND',
+  'AUTH_SESSION_TERMINAL',
 ] as const;
 
 export type ConsentErrorType = (typeof fiskilErrors)[number];

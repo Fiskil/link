@@ -21,6 +21,16 @@ export function flError(
 // Precompiled matcher for faster detection in redirect URLs
 const fiskilErrorPattern = new RegExp(fiskilErrors.join('|'));
 
+function decodeUrlIfEncoded(input: string): string {
+  const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(input);
+  if (hasScheme) return input;
+  try {
+    return decodeURIComponent(input);
+  } catch {
+    return input;
+  }
+}
+
 function extractErrorParams(url: string): {
   error: string;
   error_id?: string;
@@ -29,7 +39,8 @@ function extractErrorParams(url: string): {
   error_uri?: string;
 } | null {
   try {
-    const u = new URL(url);
+    const normalized = decodeUrlIfEncoded(url);
+    const u = new URL(normalized);
     const err = u.searchParams.get('error') ?? undefined;
     const error_type = u.searchParams.get(
       'error_type'
@@ -60,6 +71,7 @@ export function parseAuthMessage(event: MessageEvent): LinkResult | null {
 
   if ('isCompleted' in data) {
     const redirect: string | undefined = data.redirectURL;
+    console.log('redirect', redirect);
     if (redirect) {
       const match = redirect.match(fiskilErrorPattern);
       if (match) {
