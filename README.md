@@ -3,9 +3,13 @@
 [![Tests](https://github.com/fiskil/link-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/fiskil/link-sdk/actions/workflows/test.yml)
 [![npm version](https://img.shields.io/npm/v/@fiskil/link.svg)](https://www.npmjs.com/package/@fiskil/link)
 
-Minimal, strictly-typed SDK to embed Fiskil Link via an iframe. Promise-based API. Ships ESM and UMD builds.
+The Fiskil Link SDK (@fiskil/link) makes it easy to embed a [Fiskil Auth Session](https://docs.fiskil.com/auth-session) inside your web application. An *Auth Session* is how end-users connect their bank or financial institution to share Consumer Data Right (CDR) data through the Fiskil platform. 
 
-## Install
+This SDK handles the complete consent process and returns the outcome of the data sharing process - and you only need to provide a Fiskil `auth_session_id` to initiate and handle the result in your app. Once the user approves CDR sharing, your backend can listen for [Fiskil webhooks](https://docs.fiskil.com/guide/core-concepts/webhooks) and then begin fetching CDR data through Fiskil’s [Banking](https://docs.fiskil.com/banking/introduction) or [Energy](https://docs.fiskil.com/energy/introduction) APIs.
+
+## Installation 
+
+Install the package with your preferred package manager:
 
 ```bash
 npm i @fiskil/link
@@ -15,157 +19,80 @@ pnpm add @fiskil/link
 
 ## Quick start (ESM/TypeScript)
 
+Note that to use this SDK, you’ll need a Fiskil team account. If you don't have an account, you can [get in touch](https://www.fiskil.com/contact) for a quick demo. If you’re new to Fiskil platform, start with the [Quick Start Guide](https://docs.fiskil.com/guide/getting-started/quick-start).
+
+Before launching the consent flow, your backend must [create an Auth Session](https://docs.fiskil.com/auth-session#create-auth-session) through the Fiskil API. Pass the resulting `auth_session_id` into the SDK to start the flow in your application.
+
 ```ts
 import { link } from '@fiskil/link';
 
-// sessionId must be created by your backend. The SDK consumes it.
-const flow = link('session_123', {
+//Start the consent flow 
+const flow = link('auth_session_123', {
   containerId: 'connect-mount',
-  // authServer: 'http://localhost:5173', // optional for local/staging
-  // allowedOrigin: 'https://auth.fiskil.com', // defaults to derived origin
-  // set styles via your container; the iframe fills its container
 });
 
 const result = await flow;
-// result.type === 'COMPLETED'
 console.log(result.redirectURL, result.consentID);
 
-// Optional: programmatic cancel
+// to cancel the consent flow programmatically
 // flow.close();
 ```
 
-If `containerId` is omitted, the SDK creates a full-viewport overlay (inline-styled) and mounts the iframe into it.
+## API Reference
 
-## API
+### `link(sessionId, options?)`
 
-### link(sessionId, options?): LinkFlow
+Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, which is both:  
+- a `Promise` that resolves with the flow result, and  
+- a controller with `.close()` to cancel the flow programmatically.
 
-Creates and mounts the Connect iframe, returns a promise-like controller (`LinkFlow`).
+| Option          | Type   | Description |
+| --------------- | ------ | ----------------------------- |
+| `containerId`   | string | DOM element ID to mount Fiskil auth UI into. If omitted, the SDK creates a full-viewport overlay. |
+| `allowedOrigin` | string | Restrict postMessage origin (recommended in production). |
+| `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min) |
+
+### Result
+
+The `LinkFlow` resolves with one of the following:
 
 ```ts
-type LinkFlow = Promise<LinkResult> & { close(): void };
-
 type LinkResult =
   | { type: 'COMPLETED'; redirectURL?: string; consentID?: string }
-  | {
-      type: 'FAILED';
-      error: string;
-      error_id?: string;
-      error_type?: ConsentErrorType;
-      error_description?: string;
-      error_uri?: string;
-    };
-
-type LinkOptions = {
-  containerId?: string; // existing element id to mount into
-  allowedOrigin?: string; // postMessage origin; default = new URL(authUrl).origin
-  authServer?: string; // default: https://auth.fiskil.com
-  timeoutMs?: number; // default: 10 * 60 * 1000
-};
+  | { type: 'FAILED'; error: string; details?: unknown };
 ```
 
-URL loaded into the iframe: `${authServer}?sess_id=${encodeURIComponent(sessionId)}`.
+* `COMPLETED` → User approved consent.
+  - `redirectURL` is the one specified during auth session creation and `consentID`
+* `FAILED` → Something went wrong (see error and details).
 
-### Errors
+### Error Handling
 
-The promise rejects with a `LinkError`:
+The promise rejects with a `LinkError` if any error encountered during consent flow. 
 
 ```ts
-type LinkErrorCode =
-  | 'NOT_FOUND'
-  | 'TIMEOUT'
-  | 'IFRAME_ORIGIN_MISMATCH'
-  | 'IFRAME_USER_CANCELLED'
-  | 'IFRAME_UNKNOWN_MESSAGE'
-  | ConsentErrorType;
-
 interface LinkError extends Error {
   name: 'LinkError';
   code: LinkErrorCode;
-  details?: unknown; // may include consent error details
+  details?: unknown;
 }
 ```
 
-Current mapping (subject to evolution):
+| Error Code | Description |
+| ---------- | ----------- |
+| `NOT_FOUND` | Container element not found in DOM |
+| `TIMEOUT` | Flow exceeded timeout duration specified in options |
+| `IFRAME_USER_CANCELLED` | User cancelled or flow was closed programmatically |
+| `IFRAME_ORIGIN_MISMATCH` | Message received from unexpected origin |
+| `IFRAME_UNKNOWN_MESSAGE` | Received unrecognized message format |
+| `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent |
+| `CONSENT_ENDUSER_DENIED` | User denied consent |
+| `CONSENT_OTP_FAILURE` | OTP verification failed |
+| `CONSENT_ENDUSER_INELIGIBLE` | User is ineligible for consent |
+| `CONSENT_TIMEOUT` | Consent process timed out |
+| `CONSUMERDATA_PROCESSING_ERROR` | Error processing consumer data |
 
-- Programmatic cancel (calling `flow.close()`): rejects with `IFRAME_USER_CANCELLED`.
-- Message from unexpected origin: rejects with `IFRAME_ORIGIN_MISMATCH` and `details = { expectedOrigin, receivedOrigin }`.
-- Consent failure from embedded flow: rejects with the consent error code (e.g., `CONSENT_ENDUSER_DENIED`, `CONSENT_TIMEOUT`, …) and `details = { error_id, error_type, error_description, error_uri }` when present.
-- No message within `timeoutMs`: rejects with `TIMEOUT`.
-- Missing container element: throws synchronously with `NOT_FOUND`.
-
-Example handling:
-
-```ts
-import { link, type LinkResult, type LinkError } from '@fiskil/link';
-
-try {
-  const flow = link('session_123', { containerId: 'connect' });
-  const result: LinkResult = await flow;
-  // COMPLETED
-  console.log('Completed', result.redirectURL, result.consentID);
-} catch (err) {
-  const e = err as LinkError;
-  if (e?.name === 'LinkError') {
-    switch (e.code) {
-      case 'IFRAME_USER_CANCELLED':
-        // user dismissed/aborted inside the flow
-        break;
-      case 'TIMEOUT':
-        // no message received within the guard window
-        break;
-      case 'IFRAME_UNKNOWN_MESSAGE':
-        // unexpected payload; inspect e.details for more info
-        break;
-      case 'NOT_FOUND':
-        // containerId did not resolve to an element
-        break;
-      default:
-        // reserved for future consent-code mapping on e.code
-        // inspect e.details: { error_id, error_type, error_description, error_uri }
-        break;
-    }
-  } else {
-    console.error(err);
-  }
-}
-```
-
-### Options examples
-
-- **Overlay mount (default):**
-
-```ts
-link('sess');
-```
-
-- **Mount into existing container:**
-
-```ts
-link('sess', { containerId: 'connect-root' });
-```
-
-- **Override auth server for local/staging:**
-
-```ts
-link('sess', { authServer: 'http://localhost:5173' });
-```
-
-- **Lock down postMessage origin (recommended in production):**
-
-```ts
-link('sess', {
-  allowedOrigin: 'https://auth.fiskil.com',
-});
-```
-
-- **Custom timeout (e.g., 3 minutes):**
-
-```ts
-link('sess', { timeoutMs: 3 * 60 * 1000 });
-```
-
-## UMD / CDN
+## UMD / CDN Usage
 
 ```html
 <script src="/dist/fiskil-link.umd.js"></script>
@@ -173,17 +100,10 @@ link('sess', { timeoutMs: 3 * 60 * 1000 });
   const flow = FiskilLink.link('session_123', { containerId: 'connect' });
   flow.then((res) => console.log('done', res)).catch(console.error);
   // flow.close();
-  // res.type === 'COMPLETED'
-  // res.redirectURL, res.consentID
-  // on error, inspect e.code and e.details
 </script>
 ```
 
-## Advanced (internal)
-
-`parseAuthMessage(event)` is available from `./src/utils` for debugging or testing the message protocol. It normalizes the embedded app messages into `LinkResult | null`. This is not part of the public API surface and may change.
-
-## Notes
+## Additional Notes
 
 - The SDK creates a high `z-index` overlay when no `containerId` is provided.
 - The iframe `src` is controlled by the SDK and cannot be overridden via `iframe` options.
