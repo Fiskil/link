@@ -29,6 +29,8 @@ function mountContainer(containerId?: string): {
     if (!el) throw flError('NOT_FOUND', `Container not found: #${containerId}`);
     return { container: el, overlayContainer: null };
   }
+  const existing = document.getElementById('fiskil-link-overlay');
+  if (existing) return { container: existing, overlayContainer: existing };
   const div = document.createElement('div');
   div.id = 'fiskil-link-overlay';
   // Inline styles for a full-viewport overlay, independent of any CSS framework
@@ -117,6 +119,20 @@ function removeNode(node: HTMLElement | null) {
   } catch {}
 }
 
+function removeExistingLinkIframes(scope: HTMLElement) {
+  try {
+    const nodes = scope.querySelectorAll(
+      'iframe[data-fiskil-link-iframe="true"]'
+    );
+    nodes.forEach((n) => {
+      try {
+        if (typeof (n as any).remove === 'function') (n as any).remove();
+        else if ((n as any).parentNode) (n as any).parentNode.removeChild(n);
+      } catch {}
+    });
+  } catch {}
+}
+
 function teardownEmbed(
   handler: ((event: MessageEvent) => void) | null,
   iframe: HTMLIFrameElement | null,
@@ -142,8 +158,10 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
   const allowedOrigin = options?.allowedOrigin ?? new URL(authUrl).origin;
 
   // Create iframe
+  removeExistingLinkIframes(container);
   const iframe = document.createElement('iframe');
   iframe.src = authUrl;
+  iframe.setAttribute('data-fiskil-link-iframe', 'true');
   iframe.style.border = '0';
   iframe.style.width = '100%';
   iframe.style.height = '100%';

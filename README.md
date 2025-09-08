@@ -3,11 +3,11 @@
 [![Tests](https://github.com/fiskil/link-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/fiskil/link-sdk/actions/workflows/test.yml)
 [![npm version](https://img.shields.io/npm/v/@fiskil/link.svg)](https://www.npmjs.com/package/@fiskil/link)
 
-The Fiskil Link SDK (@fiskil/link) makes it easy to embed a [Fiskil Auth Session](https://docs.fiskil.com/auth-session) inside your web application. An *Auth Session* is how end-users connect their bank or financial institution to share Consumer Data Right (CDR) data through the Fiskil platform. 
+The Fiskil Link SDK (@fiskil/link) makes it easy to embed a [Fiskil Auth Session](https://docs.fiskil.com/auth-session) inside your web application. An *Auth Session* is how end-users connect their bank or financial institution to share Consumer Data Right (CDR) data through the Fiskil platform.
 
 This SDK handles the complete consent process and returns the outcome of the data sharing process - and you only need to provide a Fiskil `auth_session_id` to initiate and handle the result in your app. Once the user approves CDR sharing, your backend can listen for [Fiskil webhooks](https://docs.fiskil.com/guide/core-concepts/webhooks) and then begin fetching CDR data through Fiskil’s [Banking](https://docs.fiskil.com/banking/introduction) or [Energy](https://docs.fiskil.com/energy/introduction) APIs.
 
-## Installation 
+## Installation
 
 Install the package with your preferred package manager:
 
@@ -26,7 +26,7 @@ Before launching the consent flow, your backend must [create an Auth Session](ht
 ```ts
 import { link } from '@fiskil/link';
 
-//Start the consent flow 
+//Start the consent flow
 const flow = link('auth_session_123', {
   containerId: 'connect-mount',
 });
@@ -42,15 +42,16 @@ console.log(result.redirectURL, result.consentID);
 
 ### `link(sessionId, options?)`
 
-Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, which is both:  
-- a `Promise` that resolves with the flow result, and  
+Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, which is both:
+
+- a `Promise` that resolves with the flow result, and
 - a controller with `.close()` to cancel the flow programmatically.
 
-| Option          | Type   | Description |
-| --------------- | ------ | ----------------------------- |
+| Option          | Type   | Description                                                                                       |
+| --------------- | ------ | ------------------------------------------------------------------------------------------------- |
 | `containerId`   | string | DOM element ID to mount Fiskil auth UI into. If omitted, the SDK creates a full-viewport overlay. |
-| `allowedOrigin` | string | Restrict postMessage origin (recommended in production). |
-| `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min) |
+| `allowedOrigin` | string | Restrict postMessage origin (recommended in production).                                          |
+| `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min)                    |
 
 ### Result
 
@@ -62,13 +63,13 @@ type LinkResult =
   | { type: 'FAILED'; error: string; details?: unknown };
 ```
 
-* `COMPLETED` → User approved consent.
+- `COMPLETED` → User approved consent.
   - `redirectURL` is the one specified during auth session creation and `consentID`
-* `FAILED` → Something went wrong (see error and details).
+- `FAILED` → Something went wrong (see error and details).
 
 ### Error Handling
 
-The promise rejects with a `LinkError` if any error encountered during consent flow. 
+The promise rejects with a `LinkError` if any error encountered during consent flow.
 
 ```ts
 interface LinkError extends Error {
@@ -78,19 +79,21 @@ interface LinkError extends Error {
 }
 ```
 
-| Error Code | Description |
-| ---------- | ----------- |
-| `NOT_FOUND` | Container element not found in DOM |
-| `TIMEOUT` | Flow exceeded timeout duration specified in options |
-| `IFRAME_USER_CANCELLED` | User cancelled or flow was closed programmatically |
-| `IFRAME_ORIGIN_MISMATCH` | Message received from unexpected origin |
-| `IFRAME_UNKNOWN_MESSAGE` | Received unrecognized message format |
-| `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent |
-| `CONSENT_ENDUSER_DENIED` | User denied consent |
-| `CONSENT_OTP_FAILURE` | OTP verification failed |
-| `CONSENT_ENDUSER_INELIGIBLE` | User is ineligible for consent |
-| `CONSENT_TIMEOUT` | Consent process timed out |
-| `CONSUMERDATA_PROCESSING_ERROR` | Error processing consumer data |
+| Error Code                          | Description                                         |
+| ----------------------------------- | --------------------------------------------------- |
+| `NOT_FOUND`                         | Container element not found in DOM                  |
+| `TIMEOUT`                           | Flow exceeded timeout duration specified in options |
+| `IFRAME_USER_CANCELLED`             | User cancelled or flow was closed programmatically  |
+| `IFRAME_ORIGIN_MISMATCH`            | Message received from unexpected origin             |
+| `IFRAME_UNKNOWN_MESSAGE`            | Received unrecognized message format                |
+| `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent            |
+| `CONSENT_ENDUSER_DENIED`            | User denied consent                                 |
+| `CONSENT_OTP_FAILURE`               | OTP verification failed                             |
+| `CONSENT_ENDUSER_INELIGIBLE`        | User is ineligible for consent                      |
+| `CONSENT_TIMEOUT`                   | Consent process timed out                           |
+| `CONSUMERDATA_PROCESSING_ERROR`     | Error processing consumer data                      |
+| `AUTH_SESSION_NOT_FOUND`            | Auth session not found                              |
+| `AUTH_SESSION_TERMINAL`             | Auth session ended in a terminal state              |
 
 ## UMD / CDN Usage
 
