@@ -31,8 +31,19 @@ const flow = link('auth_session_123', {
   containerId: 'connect-mount',
 });
 
-const result = await flow;
-console.log(result.redirectURL, result.consentID);
+try {
+  const result = await flow;
+  console.log(result.redirectURL, result.consentID);
+} catch (err) {
+  if (e?.name === 'LinkError') {
+    switch (e.code) {
+      case 'IFRAME_USER_CANCELLED':
+      ...
+    }
+  } else {
+    console.error(err);
+  }
+} 
 
 // to cancel the consent flow programmatically
 // flow.close();
@@ -55,7 +66,7 @@ Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, whic
 
 ### Result
 
-The `LinkFlow` resolves with one of the following:
+The link flow resolves with one of the following:
 
 ```ts
 type LinkResult =
@@ -86,14 +97,14 @@ interface LinkError extends Error {
 | `IFRAME_USER_CANCELLED`             | User cancelled or flow was closed programmatically  |
 | `IFRAME_ORIGIN_MISMATCH`            | Message received from unexpected origin             |
 | `IFRAME_UNKNOWN_MESSAGE`            | Received unrecognized message format                |
-| `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent            |
-| `CONSENT_ENDUSER_DENIED`            | User denied consent                                 |
-| `CONSENT_OTP_FAILURE`               | OTP verification failed                             |
-| `CONSENT_ENDUSER_INELIGIBLE`        | User is ineligible for consent                      |
+| `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent flow       |
+| `CONSENT_ENDUSER_DENIED`            | User denied consent during consent flow             |
+| `CONSENT_OTP_FAILURE`               | OTP verification failed during consent flow         |
+| `CONSENT_ENDUSER_INELIGIBLE`        | User is ineligible for data sharing                 |
 | `CONSENT_TIMEOUT`                   | Consent process timed out                           |
 | `CONSUMERDATA_PROCESSING_ERROR`     | Error processing consumer data                      |
-| `AUTH_SESSION_NOT_FOUND`            | Auth session not found                              |
-| `AUTH_SESSION_TERMINAL`             | Auth session ended in a terminal state              |
+| `AUTH_SESSION_NOT_FOUND`            | Specified auth session not found                    |
+| `AUTH_SESSION_TERMINAL`             | Specified auth session has already ended             |
 
 ## UMD / CDN Usage
 
