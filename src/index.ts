@@ -23,7 +23,7 @@ function mountContainer(containerId?: string): {
 } {
   if (containerId) {
     const el = document.getElementById(containerId);
-    if (!el) throw flError('CONTAINER_NOT_FOUND', `Container not found: #${containerId}`);
+    if (!el) throw flError('LINK_NOT_FOUND', `Container not found: #${containerId}`);
     return { container: el, overlayContainer: null };
   }
   const existing = document.getElementById('fiskil-link-overlay');
@@ -55,7 +55,7 @@ function createMessageHandler(
       // Explicitly surface unexpected origins to aid integrators
       reject(
         flError(
-          'IFRAME_ORIGIN_MISMATCH',
+          'LINK_ORIGIN_MISMATCH',
           'Message received from unexpected origin',
           {
             details: {
@@ -82,7 +82,7 @@ function createMessageHandler(
       } catch {}
       reject(
         flError(
-          (parsed.error_type as LinkErrorCode) ?? 'IFRAME_UNKNOWN_MESSAGE',
+          (parsed.error_type as LinkErrorCode) ?? 'LINK_UNKNOWN_MESSAGE',
           parsed.error,
           {
             details: {
@@ -100,7 +100,7 @@ function createMessageHandler(
 
 function createTimeoutHandler(reject: (error: any) => void) {
   return function onTimeout() {
-    reject(flError('CONTAINER_TIMEOUT', 'Iframe flow timed out'));
+    reject(flError('LINK_TIMEOUT', 'Iframe flow timed out'));
   };
 }
 
@@ -214,7 +214,7 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
       try {
         closedByCaller = true;
         (rejectRef ?? (() => {}))(
-          flError('IFRAME_USER_CANCELLED', 'Iframe flow closed by caller')
+          flError('LINK_USER_CANCELLED', 'Iframe flow closed by caller')
         );
       } catch {}
     },

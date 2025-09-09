@@ -86,11 +86,11 @@ interface LinkError extends Error {
 
 | Error Code                          | Description                                         |
 | ----------------------------------- | --------------------------------------------------- |
-| `CONTAINER_NOT_FOUND`               | Container element not found in DOM                  |
-| `CONTAINER_TIMEOUT`                 | Flow exceeded timeout duration specified in options  |
-| `IFRAME_USER_CANCELLED`             | User cancelled or flow was closed programmatically   |
-| `IFRAME_ORIGIN_MISMATCH`            | Message received from unexpected origin             |
-| `IFRAME_UNKNOWN_MESSAGE`            | Received unrecognized message format                |
+| `LINK_NOT_FOUND`                    | Container element not found in DOM                  |
+| `LINK_TIMEOUT`                      | Flow exceeded timeout duration specified in options  |
+| `LINK_USER_CANCELLED`               | User cancelled or flow was closed programmatically   |
+| `LINK_ORIGIN_MISMATCH`              | Message received from unexpected origin             |
+| `LINK_UNKNOWN_MESSAGE`              | Received unrecognized message format                |
 | `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent flow        |
 | `CONSENT_ENDUSER_DENIED`            | User denied consent during consent flow              |
 | `CONSENT_OTP_FAILURE`               | OTP verification failed during consent flow           |
