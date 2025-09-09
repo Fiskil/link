@@ -72,8 +72,8 @@ interface LinkError extends Error {
 
 | Error Code                          | Description                                         |
 | ----------------------------------- | --------------------------------------------------- |
-| `NOT_FOUND`                         | Container element not found in DOM                  |
-| `TIMEOUT`                           | Flow exceeded timeout duration specified in options  |
+| `CONTAINER_NOT_FOUND`               | Container element not found in DOM                  |
+| `CONTAINER_TIMEOUT`                 | Flow exceeded timeout duration specified in options  |
 | `IFRAME_USER_CANCELLED`             | User cancelled or flow was closed programmatically   |
 | `IFRAME_ORIGIN_MISMATCH`            | Message received from unexpected origin             |
 | `IFRAME_UNKNOWN_MESSAGE`            | Received unrecognized message format                |
