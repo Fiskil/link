@@ -12,8 +12,8 @@ export const fiskilErrors = [
 export type ConsentErrorType = (typeof fiskilErrors)[number];
 
 export type LinkErrorCode =
-  | 'NOT_FOUND'
-  | 'TIMEOUT'
+  | 'CONTAINER_NOT_FOUND'
+  | 'CONTAINER_TIMEOUT'
   | 'IFRAME_USER_CANCELLED'
   | 'IFRAME_ORIGIN_MISMATCH'
   | 'IFRAME_UNKNOWN_MESSAGE'
