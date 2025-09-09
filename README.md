@@ -26,7 +26,7 @@ Before launching the consent flow, your backend must [create an Auth Session](ht
 ```ts
 import { link } from '@fiskil/link';
 
-// mounting the consent UI with auth_session_id
+// Start the consent flow
 const flow = link('auth_session_id', {
   containerId: 'link-container',
 });
@@ -55,12 +55,26 @@ Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, whic
 | Option          | Type   | Description  |
 | --------------- | ------ | --------------------------- |
 | `containerId`   | string | DOM element ID to mount Fiskil auth UI into. If omitted, the SDK creates a full-viewport overlay. |
-| `allowedOrigin` | string | Restrict postMessage origin (recommended in production).|
-| `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min)|
+| `allowedOrigin` | string | Restrict postMessage origin (recommended in production).                                          |                      |
+| `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min)                    |
 
 ### Result
 
-When the consent flow is completed, it resolves with a `consentID` which can be used to fetch user data from fiskil platform. The promise rejects with a `LinkError` if any error encountered during consent flow.
+The `LinkFlow` resolves with the success payload:
+
+```ts
+type LinkResult = {
+  redirectURL?: string;
+  consentID?: string;
+};
+```
+
+- Resolved result includes `redirectURL` (as configured) and a `consentID` which can be used to fetch user data from fiskil platform.
+- On failure, the promise rejects with a `LinkError` (see Error Handling).
+
+### Error Handling
+
+The promise rejects with a `LinkError` if any error encountered during consent flow.
 
 ```ts
 interface LinkError extends Error {
@@ -72,11 +86,11 @@ interface LinkError extends Error {
 
 | Error Code                          | Description                                         |
 | ----------------------------------- | --------------------------------------------------- |
-| `CONTAINER_NOT_FOUND`               | Container element not found in DOM                  |
-| `CONTAINER_TIMEOUT`                 | Flow exceeded timeout duration specified in options  |
-| `IFRAME_USER_CANCELLED`             | User cancelled or flow was closed programmatically   |
-| `IFRAME_ORIGIN_MISMATCH`            | Message received from unexpected origin             |
-| `IFRAME_UNKNOWN_MESSAGE`            | Received unrecognized message format                |
+| `LINK_NOT_FOUND`                    | Container element not found in DOM                  |
+| `LINK_TIMEOUT`                      | Flow exceeded timeout duration specified in options  |
+| `LINK_USER_CANCELLED`               | User cancelled or flow was closed programmatically   |
+| `LINK_ORIGIN_MISMATCH`              | Message received from unexpected origin             |
+| `LINK_UNKNOWN_MESSAGE`              | Received unrecognized message format                |
 | `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent flow        |
 | `CONSENT_ENDUSER_DENIED`            | User denied consent during consent flow              |
 | `CONSENT_OTP_FAILURE`               | OTP verification failed during consent flow           |
@@ -85,6 +99,8 @@ interface LinkError extends Error {
 | `CONSUMERDATA_PROCESSING_ERROR`     | Error processing consumer data                      |
 | `AUTH_SESSION_NOT_FOUND`            | Specified auth session not found                     |
 | `AUTH_SESSION_TERMINAL`             | Specified auth session has already ended             |
+
+Note: For `AUTH_SESSION_NOT_FOUND` and `AUTH_SESSION_TERMINAL`, the iframe remains mounted. You can close it programmatically with `.close()`.
 
 ## UMD / CDN Usage
 
