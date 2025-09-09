@@ -89,7 +89,7 @@ interface LinkError extends Error {
 ## UMD / CDN Usage
 
 ```html
-<script src="/dist/fiskil-link.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fiskil/link@0.1.5-beta/dist/fiskil-link.umd.js"></script>
 <script>
   const flow = FiskilLink.link('session_123', { containerId: 'connect' });
   flow.then((res) => console.log('done', res)).catch(console.error);
