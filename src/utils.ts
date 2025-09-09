@@ -1,9 +1,4 @@
-import type {
-  LinkErrorCode,
-  ConsentErrorType,
-  LinkError,
-  LinkResult,
-} from './types';
+import type { LinkErrorCode, ConsentErrorType, LinkError } from './types';
 import { fiskilErrors } from './types';
 
 export function flError(
@@ -64,7 +59,24 @@ function extractErrorParams(url: string): {
   }
 }
 
-export function parseAuthMessage(event: MessageEvent): LinkResult | null {
+export type ParsedAuthMessage =
+  | {
+      type: 'COMPLETED';
+      redirectURL?: string;
+      consentID?: string;
+    }
+  | {
+      type: 'FAILED';
+      error: string;
+      error_id?: string;
+      error_type?: ConsentErrorType;
+      error_description?: string;
+      error_uri?: string;
+    };
+
+export function parseAuthMessage(
+  event: MessageEvent
+): ParsedAuthMessage | null {
   const data: any = event.data;
 
   if (!data || typeof data !== 'object') return null;

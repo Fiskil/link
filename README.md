@@ -50,22 +50,22 @@ Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, whic
 | Option          | Type   | Description                                                                                       |
 | --------------- | ------ | ------------------------------------------------------------------------------------------------- |
 | `containerId`   | string | DOM element ID to mount Fiskil auth UI into. If omitted, the SDK creates a full-viewport overlay. |
-| `allowedOrigin` | string | Restrict postMessage origin (recommended in production).                                          |
+| `allowedOrigin` | string | Restrict postMessage origin (recommended in production).                                          |                      |
 | `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min)                    |
 
 ### Result
 
-The `LinkFlow` resolves with one of the following:
+The `LinkFlow` resolves with the success payload:
 
 ```ts
-type LinkResult =
-  | { type: 'COMPLETED'; redirectURL?: string; consentID?: string }
-  | { type: 'FAILED'; error: string; details?: unknown };
+type LinkResult = {
+  redirectURL?: string;
+  consentID?: string;
+};
 ```
 
-- `COMPLETED` → User approved consent.
-  - `redirectURL` is the one specified during auth session creation and `consentID`
-- `FAILED` → Something went wrong (see error and details).
+- Resolved result includes `redirectURL` (as configured) and optionally `consentID`.
+- On failure, the promise rejects with a `LinkError` (see Error Handling).
 
 ### Error Handling
 
@@ -94,6 +94,8 @@ interface LinkError extends Error {
 | `CONSUMERDATA_PROCESSING_ERROR`     | Error processing consumer data                      |
 | `AUTH_SESSION_NOT_FOUND`            | Auth session not found                              |
 | `AUTH_SESSION_TERMINAL`             | Auth session ended in a terminal state              |
+
+Note: For `AUTH_SESSION_NOT_FOUND` and `AUTH_SESSION_TERMINAL`, the iframe remains mounted. You can close it programmatically with `.close()`.
 
 ## UMD / CDN Usage
 

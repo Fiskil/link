@@ -25,16 +25,10 @@ export interface LinkError extends Error {
   details?: unknown;
 }
 
-export type LinkResult =
-  | { type: 'COMPLETED'; redirectURL?: string; consentID?: string }
-  | {
-      type: 'FAILED';
-      error: string;
-      error_id?: string;
-      error_type?: ConsentErrorType;
-      error_description?: string;
-      error_uri?: string;
-    };
+export type LinkResult = {
+  redirectURL?: string;
+  consentID?: string;
+};
 
 export type LinkOptions = {
   containerId?: string;

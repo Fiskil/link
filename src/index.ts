@@ -18,6 +18,7 @@ export type {
 
 // ---------- Utilities ----------
 import { flError, parseAuthMessage } from './utils';
+import type { ParsedAuthMessage } from './utils';
 
 // ---------- Internal Helpers ----------
 function mountContainer(containerId?: string): {
@@ -50,7 +51,8 @@ function mountContainer(containerId?: string): {
 function createMessageHandler(
   allowedOrigin: string,
   resolve: (value: LinkResult) => void,
-  reject: (error: any) => void
+  reject: (error: any) => void,
+  onFailed?: (failure: Extract<ParsedAuthMessage, { type: 'FAILED' }>) => void
 ) {
   return function onMessage(event: MessageEvent) {
     if (event.origin !== allowedOrigin) {
@@ -74,20 +76,27 @@ function createMessageHandler(
     if (!parsed) return;
 
     if (parsed.type === 'COMPLETED') {
-      resolve(parsed);
+      resolve({ redirectURL: parsed.redirectURL, consentID: parsed.consentID });
       return;
     }
 
     if (parsed.type === 'FAILED') {
+      try {
+        onFailed?.(parsed as Extract<ParsedAuthMessage, { type: 'FAILED' }>);
+      } catch {}
       reject(
-        flError(parsed.error_type as LinkErrorCode, parsed.error, {
-          details: {
-            error_id: parsed.error_id,
-            error_type: parsed.error_type,
-            error_description: parsed.error_description,
-            error_uri: parsed.error_uri,
-          },
-        })
+        flError(
+          (parsed.error_type as LinkErrorCode) ?? 'IFRAME_UNKNOWN_MESSAGE',
+          parsed.error,
+          {
+            details: {
+              error_id: parsed.error_id,
+              error_type: parsed.error_type,
+              error_description: parsed.error_description,
+              error_uri: parsed.error_uri,
+            },
+          }
+        )
       );
     }
   };
@@ -169,6 +178,8 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
 
   let current: HTMLIFrameElement | null = iframe;
   let messageHandler: ((event: MessageEvent) => void) | null = null;
+  let keepOpenOnFailure = false;
+  let closedByCaller = false;
 
   let rejectRef: ((error: any) => void) | null = null;
   let timeoutId: number | undefined;
@@ -181,7 +192,19 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
     }
     rejectRef = settleErr;
 
-    messageHandler = createMessageHandler(allowedOrigin, settleOk, settleErr);
+    messageHandler = createMessageHandler(
+      allowedOrigin,
+      settleOk,
+      settleErr,
+      (failure) => {
+        try {
+          const t = failure.error_type;
+          if (t === 'AUTH_SESSION_NOT_FOUND' || t === 'AUTH_SESSION_TERMINAL') {
+            keepOpenOnFailure = true;
+          }
+        } catch {}
+      }
+    );
     window.addEventListener('message', messageHandler);
 
     // Timeout guard: configurable (default 10 minutes)
@@ -193,6 +216,7 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
     close() {
       // Reject the in-flight promise as a user-cancel action, then cleanup
       try {
+        closedByCaller = true;
         (rejectRef ?? (() => {}))(
           flError('IFRAME_USER_CANCELLED', 'Iframe flow closed by caller')
         );
@@ -203,7 +227,11 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
   const promise = finalizePromise(
     completed,
     () => {
-      teardownEmbed(messageHandler, current, overlayContainer);
+      if (messageHandler) window.removeEventListener('message', messageHandler);
+      if (closedByCaller || !keepOpenOnFailure) {
+        removeNode(current);
+        removeNode(overlayContainer);
+      }
     },
     timeoutId
   ) as LinkFlow;
