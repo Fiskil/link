@@ -26,14 +26,14 @@ Before launching the consent flow, your backend must [create an Auth Session](ht
 ```ts
 import { link } from '@fiskil/link';
 
-//Start the consent flow
-const flow = link('auth_session_123', {
-  containerId: 'connect-mount',
+// mounting the consent UI with auth_session_id
+const flow = link('auth_session_id', {
+  containerId: 'link-container',
 });
 
 try {
   const result = await flow;
-  console.log(result.redirectURL, result.consentID);
+  console.log(result.consentID);
 } catch (err) {
   const linkError = err as LinkError;
   console.log('Link Error code:', linkError.code);
