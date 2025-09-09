@@ -26,23 +26,17 @@ Before launching the consent flow, your backend must [create an Auth Session](ht
 ```ts
 import { link } from '@fiskil/link';
 
-//Start the consent flow
-const flow = link('auth_session_123', {
-  containerId: 'connect-mount',
+// mounting the consent UI with auth_session_id
+const flow = link('auth_session_id', {
+  containerId: 'link-container',
 });
 
 try {
   const result = await flow;
-  console.log(result.redirectURL, result.consentID);
+  console.log(result.consentID);
 } catch (err) {
-  if (e?.name === 'LinkError') {
-    switch (e.code) {
-      case 'IFRAME_USER_CANCELLED':
-      ...
-    }
-  } else {
-    console.error(err);
-  }
+  const linkError = err as LinkError;
+  console.log('Link Error code:', linkError.code);
 } 
 
 // to cancel the consent flow programmatically
@@ -58,29 +52,15 @@ Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, whic
 - a `Promise` that resolves with the flow result, and
 - a controller with `.close()` to cancel the flow programmatically.
 
-| Option          | Type   | Description                                                                                       |
-| --------------- | ------ | ------------------------------------------------------------------------------------------------- |
+| Option          | Type   | Description  |
+| --------------- | ------ | --------------------------- |
 | `containerId`   | string | DOM element ID to mount Fiskil auth UI into. If omitted, the SDK creates a full-viewport overlay. |
-| `allowedOrigin` | string | Restrict postMessage origin (recommended in production).                                          |
-| `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min)                    |
+| `allowedOrigin` | string | Restrict postMessage origin (recommended in production).|
+| `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min)|
 
 ### Result
 
-The link flow resolves with one of the following:
-
-```ts
-type LinkResult =
-  | { type: 'COMPLETED'; redirectURL?: string; consentID?: string }
-  | { type: 'FAILED'; error: string; details?: unknown };
-```
-
-- `COMPLETED` → User approved consent.
-  - `redirectURL` is the one specified during auth session creation and `consentID`
-- `FAILED` → Something went wrong (see error and details).
-
-### Error Handling
-
-The promise rejects with a `LinkError` if any error encountered during consent flow.
+When the consent flow is completed, it resolves with a `consentID` which can be used to fetch user data from fiskil platform. The promise rejects with a `LinkError` if any error encountered during consent flow.
 
 ```ts
 interface LinkError extends Error {
@@ -92,18 +72,18 @@ interface LinkError extends Error {
 
 | Error Code                          | Description                                         |
 | ----------------------------------- | --------------------------------------------------- |
-| `NOT_FOUND`                         | Container element not found in DOM                  |
-| `TIMEOUT`                           | Flow exceeded timeout duration specified in options |
-| `IFRAME_USER_CANCELLED`             | User cancelled or flow was closed programmatically  |
+| `CONTAINER_NOT_FOUND`               | Container element not found in DOM                  |
+| `CONTAINER_TIMEOUT`                 | Flow exceeded timeout duration specified in options  |
+| `IFRAME_USER_CANCELLED`             | User cancelled or flow was closed programmatically   |
 | `IFRAME_ORIGIN_MISMATCH`            | Message received from unexpected origin             |
 | `IFRAME_UNKNOWN_MESSAGE`            | Received unrecognized message format                |
-| `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent flow       |
-| `CONSENT_ENDUSER_DENIED`            | User denied consent during consent flow             |
-| `CONSENT_OTP_FAILURE`               | OTP verification failed during consent flow         |
+| `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent flow        |
+| `CONSENT_ENDUSER_DENIED`            | User denied consent during consent flow              |
+| `CONSENT_OTP_FAILURE`               | OTP verification failed during consent flow           |
 | `CONSENT_ENDUSER_INELIGIBLE`        | User is ineligible for data sharing                 |
 | `CONSENT_TIMEOUT`                   | Consent process timed out                           |
 | `CONSUMERDATA_PROCESSING_ERROR`     | Error processing consumer data                      |
-| `AUTH_SESSION_NOT_FOUND`            | Specified auth session not found                    |
+| `AUTH_SESSION_NOT_FOUND`            | Specified auth session not found                     |
 | `AUTH_SESSION_TERMINAL`             | Specified auth session has already ended             |
 
 ## UMD / CDN Usage

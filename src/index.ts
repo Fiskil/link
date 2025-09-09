@@ -1,23 +1,19 @@
 // ---------- Public Types ----------
 import type {
+  ConsentErrorType,
+  LinkError,
+  LinkErrorCode,
+  LinkFlow,
   LinkOptions,
   LinkResult,
-  LinkFlow,
-  ConsentErrorType,
-  LinkErrorCode,
-  LinkError,
 } from './types';
 export type {
-  LinkOptions,
-  LinkResult,
-  LinkFlow,
-  ConsentErrorType,
-  LinkErrorCode,
-  LinkError,
+  ConsentErrorType, LinkError, LinkErrorCode, LinkFlow, LinkOptions,
+  LinkResult
 };
 
 // ---------- Utilities ----------
-import { flError, parseAuthMessage } from './utils';
+  import { flError, parseAuthMessage } from './utils';
 
 // ---------- Internal Helpers ----------
 function mountContainer(containerId?: string): {
@@ -26,7 +22,7 @@ function mountContainer(containerId?: string): {
 } {
   if (containerId) {
     const el = document.getElementById(containerId);
-    if (!el) throw flError('NOT_FOUND', `Container not found: #${containerId}`);
+    if (!el) throw flError('CONTAINER_NOT_FOUND', `Container not found: #${containerId}`);
     return { container: el, overlayContainer: null };
   }
   const existing = document.getElementById('fiskil-link-overlay');
@@ -95,7 +91,7 @@ function createMessageHandler(
 
 function createTimeoutHandler(reject: (error: any) => void) {
   return function onTimeout() {
-    reject(flError('TIMEOUT', 'Iframe flow timed out'));
+    reject(flError('CONTAINER_TIMEOUT', 'Iframe flow timed out'));
   };
 }
 
