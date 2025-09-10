@@ -4,9 +4,7 @@ export const fiskilErrors = [
   'CONSENT_OTP_FAILURE',
   'CONSENT_ENDUSER_INELIGIBLE',
   'CONSENT_TIMEOUT',
-  'CONSUMERDATA_PROCESSING_ERROR',
-  'AUTH_SESSION_NOT_FOUND',
-  'AUTH_SESSION_TERMINAL',
+  'LINK_INVALID_SESSION',
 ] as const;
 
 export type ConsentErrorType = (typeof fiskilErrors)[number];
@@ -16,7 +14,7 @@ export type LinkErrorCode =
   | 'LINK_TIMEOUT'
   | 'LINK_USER_CANCELLED'
   | 'LINK_ORIGIN_MISMATCH'
-  | 'LINK_UNKNOWN_MESSAGE'
+  | 'LINK_INTERNAL_ERROR'
   | ConsentErrorType;
 
 export interface LinkError extends Error {

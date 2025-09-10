@@ -84,23 +84,21 @@ interface LinkError extends Error {
 }
 ```
 
-| Error Code                          | Description                                         |
-| ----------------------------------- | --------------------------------------------------- |
-| `LINK_NOT_FOUND`                    | Container element not found in DOM                  |
-| `LINK_TIMEOUT`                      | Flow exceeded timeout duration specified in options  |
-| `LINK_USER_CANCELLED`               | User cancelled or flow was closed programmatically   |
-| `LINK_ORIGIN_MISMATCH`              | Message received from unexpected origin             |
-| `LINK_UNKNOWN_MESSAGE`              | Received unrecognized message format                |
-| `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent flow        |
-| `CONSENT_ENDUSER_DENIED`            | User denied consent during consent flow              |
-| `CONSENT_OTP_FAILURE`               | OTP verification failed during consent flow           |
-| `CONSENT_ENDUSER_INELIGIBLE`        | User is ineligible for data sharing                 |
-| `CONSENT_TIMEOUT`                   | Consent process timed out                           |
-| `CONSUMERDATA_PROCESSING_ERROR`     | Error processing consumer data                      |
-| `AUTH_SESSION_NOT_FOUND`            | Specified auth session not found                     |
-| `AUTH_SESSION_TERMINAL`             | Specified auth session has already ended             |
+| Error Code                          | Description                                           |
+| ----------------------------------- | ------------------------------------------------------|
+| `LINK_NOT_FOUND`                    | Container element not found in DOM                    |
+| `LINK_TIMEOUT`                      | Flow exceeded timeout duration specified in options    |
+| `LINK_USER_CANCELLED`               | User cancelled or flow was closed programmatically     |
+| `LINK_ORIGIN_MISMATCH`              | Message received from unexpected origin               |
+| `LINK_INTERNAL_ERROR`               | Unrecognized error encountered during the consent flow |
+| `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent flow          |
+| `CONSENT_ENDUSER_DENIED`            | User denied consent during consent flow                |
+| `CONSENT_OTP_FAILURE`               | OTP verification failed during consent flow             |
+| `CONSENT_ENDUSER_INELIGIBLE`        | User is ineligible for data sharing                   |
+| `CONSENT_TIMEOUT`                   | Consent process timed out                             |
+| `LINK_INVALID_SESSION`              | The specified auth session is invalid                  |
 
-Note: For `AUTH_SESSION_NOT_FOUND` and `AUTH_SESSION_TERMINAL`, the iframe remains mounted. You can close it programmatically with `.close()`.
+Note: For `LINK_INVALID_SESSION`, the iframe remains mounted. You can close it programmatically with `.close()`.
 
 ## UMD / CDN Usage
 
