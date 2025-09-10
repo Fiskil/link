@@ -3,18 +3,18 @@ export const fiskilErrors = [
   'CONSENT_ENDUSER_DENIED',
   'CONSENT_OTP_FAILURE',
   'CONSENT_ENDUSER_INELIGIBLE',
-  'CONSENT_TIMEOUT',
-  'CONSUMERDATA_PROCESSING_ERROR',
+  'CONSENT_TIMEOUT'
 ] as const;
 
 export type ConsentErrorType = (typeof fiskilErrors)[number];
 
 export type LinkErrorCode =
-  | 'NOT_FOUND'
-  | 'TIMEOUT'
-  | 'IFRAME_USER_CANCELLED'
-  | 'IFRAME_ORIGIN_MISMATCH'
-  | 'IFRAME_UNKNOWN_MESSAGE'
+  | 'LINK_NOT_FOUND'
+  | 'LINK_TIMEOUT'
+  | 'LINK_USER_CANCELLED'
+  | 'LINK_ORIGIN_MISMATCH'
+  | 'LINK_INTERNAL_ERROR'
+  | 'LINK_INVALID_SESSION'
   | ConsentErrorType;
 
 export interface LinkError extends Error {
@@ -23,16 +23,10 @@ export interface LinkError extends Error {
   details?: unknown;
 }
 
-export type LinkResult =
-  | { type: 'COMPLETED'; redirectURL?: string; consentID?: string }
-  | {
-      type: 'FAILED';
-      error: string;
-      error_id?: string;
-      error_type?: ConsentErrorType;
-      error_description?: string;
-      error_uri?: string;
-    };
+export type LinkResult = {
+  redirectURL?: string;
+  consentID?: string;
+};
 
 export type LinkOptions = {
   containerId?: string;
