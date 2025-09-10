@@ -17,15 +17,10 @@ import { flError, parseAuthMessage } from './utils';
 import type { ParsedAuthMessage } from './utils';
 
 // ---------- Internal Helpers ----------
-function mountContainer(containerId?: string): {
+function mountContainer(): {
   container: HTMLElement;
   overlayContainer: HTMLElement | null;
 } {
-  if (containerId) {
-    const el = document.getElementById(containerId);
-    if (!el) throw flError('LINK_NOT_FOUND', `Container not found: #${containerId}`);
-    return { container: el, overlayContainer: null };
-  }
   const existing = document.getElementById('fiskil-link-overlay');
   if (existing) return { container: existing, overlayContainer: existing };
   const div = document.createElement('div');
@@ -80,19 +75,16 @@ function createMessageHandler(
       try {
         onFailed?.(parsed as Extract<ParsedAuthMessage, { type: 'FAILED' }>);
       } catch {}
+      const code: LinkErrorCode = parsed.error_type ?? 'LINK_INTERNAL_ERROR';
       reject(
-        flError(
-          (parsed.error_type as LinkErrorCode) ?? 'LINK_UNKNOWN_MESSAGE',
-          parsed.error,
-          {
-            details: {
-              error_id: parsed.error_id,
-              error_type: parsed.error_type,
-              error_description: parsed.error_description,
-              error_uri: parsed.error_uri,
-            },
-          }
-        )
+        flError(code, parsed.error, {
+          details: {
+            error_id: parsed.error_id,
+            error_type: parsed.error_type,
+            error_description: parsed.error_description,
+            error_uri: parsed.error_uri,
+          },
+        })
       );
     }
   };
@@ -153,7 +145,7 @@ function teardownEmbed(
  * Returns a controller and a promise that settles on completion/cancel.
  */
 export function link(sessionId: string, options?: LinkOptions): LinkFlow {
-  const mounted = mountContainer(options?.containerId);
+  const mounted = mountContainer();
   let overlayContainer: HTMLElement | null = mounted.overlayContainer;
   const container = mounted.container;
   // Construct auth URL (allow override for local/staging)
@@ -194,8 +186,7 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
       settleErr,
       (failure) => {
         try {
-          const t = failure.error_type;
-          if (t === 'AUTH_SESSION_NOT_FOUND' || t === 'AUTH_SESSION_TERMINAL') {
+          if (failure.error_type === 'LINK_INVALID_SESSION') {
             keepOpenOnFailure = true;
           }
         } catch {}

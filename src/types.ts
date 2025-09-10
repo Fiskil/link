@@ -29,7 +29,6 @@ export type LinkResult = {
 };
 
 export type LinkOptions = {
-  containerId?: string;
   allowedOrigin?: string;
   authServer?: string;
   timeoutMs?: number;

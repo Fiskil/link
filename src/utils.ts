@@ -29,7 +29,7 @@ function decodeUrlIfEncoded(input: string): string {
 function extractErrorParams(url: string): {
   error: string;
   error_id?: string;
-  error_type?: ConsentErrorType;
+  error_type?: LinkErrorCode;
   error_description?: string;
   error_uri?: string;
 } | null {
@@ -39,7 +39,7 @@ function extractErrorParams(url: string): {
     const err = u.searchParams.get('error') ?? undefined;
     const error_type = u.searchParams.get(
       'error_type'
-    ) as ConsentErrorType | null;
+    ) as LinkErrorCode | null;
     const error_id = u.searchParams.get('error_id') ?? undefined;
     const error_description =
       u.searchParams.get('error_description') ?? undefined;
@@ -47,7 +47,7 @@ function extractErrorParams(url: string): {
     if (error_type || err || error_id || error_description || error_uri) {
       return {
         error: (error_type as string) || err || 'Unknown error',
-        error_type: (error_type ?? undefined) as ConsentErrorType | undefined,
+        error_type: (error_type ?? undefined) as LinkErrorCode | undefined,
         error_id,
         error_description,
         error_uri,
@@ -69,7 +69,7 @@ export type ParsedAuthMessage =
       type: 'FAILED';
       error: string;
       error_id?: string;
-      error_type?: ConsentErrorType;
+      error_type?: LinkErrorCode;
       error_description?: string;
       error_uri?: string;
     };

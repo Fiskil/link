@@ -27,9 +27,7 @@ Before launching the consent flow, your backend must [create an Auth Session](ht
 import { link } from '@fiskil/link';
 
 // Start the consent flow
-const flow = link('auth_session_id', {
-  containerId: 'link-container',
-});
+const flow = link('auth_session_id');
 
 try {
   const result = await flow;
@@ -54,9 +52,8 @@ Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, whic
 
 | Option          | Type   | Description  |
 | --------------- | ------ | --------------------------- |
-| `containerId`   | string | DOM element ID to mount Fiskil auth UI into. If omitted, the SDK creates a full-viewport overlay. |
-| `allowedOrigin` | string | Restrict postMessage origin (recommended in production).                                          |                      |
-| `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min)                    |
+| `allowedOrigin` | string | Restrict postMessage origin (recommended in production). |
+| `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min) |
 
 ### Result
 
@@ -105,7 +102,7 @@ Note: For `LINK_INVALID_SESSION`, the iframe remains mounted. You can close it p
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@fiskil/link@0.1.5-beta/dist/fiskil-link.umd.js"></script>
 <script>
-  const flow = FiskilLink.link('session_123', { containerId: 'connect' });
+  const flow = FiskilLink.link('session_123');
   flow.then((res) => console.log('done', res)).catch(console.error);
   // flow.close();
 </script>
