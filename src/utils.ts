@@ -37,9 +37,7 @@ function extractErrorParams(url: string): {
     const normalized = decodeUrlIfEncoded(url);
     const u = new URL(normalized);
     const err = u.searchParams.get('error') ?? undefined;
-    const error_type = u.searchParams.get(
-      'error_type'
-    ) as LinkErrorCode | null;
+    const error_type = u.searchParams.get('error_type') as LinkErrorCode | null;
     const error_id = u.searchParams.get('error_id') ?? undefined;
     const error_description =
       u.searchParams.get('error_description') ?? undefined;
@@ -77,40 +75,70 @@ export type ParsedAuthMessage =
 export function parseAuthMessage(
   event: MessageEvent
 ): ParsedAuthMessage | null {
-  const data: any = event.data;
+  const data: {
+    error?: string;
+    errorID?: string;
+    errorType?: string;
+    errorDescription?: string;
+    errorURI?: string;
+    redirectURL?: string;
+    consentID?: string;
+    isCompleted: boolean;
+  } = event.data;
 
-  if (!data || typeof data !== 'object') return null;
+  if (!data || typeof data !== 'object') {
+    return null;
+  }
 
   if ('isCompleted' in data) {
-    const redirect: string | undefined = data.redirectURL;
-    console.log('redirect', redirect);
-    if (redirect) {
-      const match = redirect.match(fiskilErrorPattern);
+    const {
+      error,
+      errorID,
+      errorType,
+      errorDescription,
+      errorURI,
+      redirectURL,
+      consentID,
+    } = data;
+
+    // Check if flattened error params are present
+    if (
+      data.isCompleted === false &&
+      (error || errorID || errorType || errorDescription || errorURI)
+    ) {
+      return {
+        type: 'FAILED',
+        error: error ?? 'internal error',
+        error_id: errorID ?? undefined,
+        error_type: errorType as LinkErrorCode | undefined,
+        error_description: errorDescription ?? undefined,
+        error_uri: errorURI ?? undefined,
+      };
+    }
+
+    // Check if redirect URL contains error params
+    if (redirectURL) {
+      const match = redirectURL.match(fiskilErrorPattern);
       if (match) {
-        const details = extractErrorParams(redirect);
+        const details = extractErrorParams(redirectURL);
         if (details) return { type: 'FAILED', ...details };
         return { type: 'FAILED', error: match[0] };
       }
     }
 
-    if (data.isCompleted === true) {
+    // Check if completion params are present
+    if (data.isCompleted === true && consentID) {
       return {
         type: 'COMPLETED',
-        redirectURL: data.redirectURL,
-        consentID: data.arrangementID,
-      };
-    }
-
-    if (data.isCompleted === false) {
-      return {
-        type: 'FAILED',
-        error: typeof data.error === 'string' ? data.error : 'User cancelled',
+        redirectURL: redirectURL,
+        consentID: consentID,
       };
     }
   }
 
-  if (typeof data.error === 'string')
+  if (typeof data.error === 'string') {
     return { type: 'FAILED', error: data.error };
+  }
 
   return null;
 }
