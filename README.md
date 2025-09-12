@@ -107,9 +107,3 @@ Note: For `LINK_INVALID_SESSION`, the iframe remains mounted. You can close it p
   // flow.close();
 </script>
 ```
-
-## Additional Notes
-
-- The SDK creates a high `z-index` overlay when no `containerId` is provided.
-- The iframe `src` is controlled by the SDK and cannot be overridden via `iframe` options.
-- All public types are re-exported from the package entry for a single stable import surface.
