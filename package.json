@@ -1,6 +1,6 @@
 {
   "name": "@fiskil/link",
-  "version": "v0.1.5-beta",
+  "version": "v0.1.6-beta",
   "description": "Minimal TypeScript SDK for creating Fiskil auth sessions (redirect or iframe).",
   "license": "SEE LICENSE IN LICENSE.md",
   "type": "module",
