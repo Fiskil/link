@@ -8,8 +8,12 @@ import type {
   LinkResult,
 } from './types';
 export type {
-  ConsentErrorType, LinkError, LinkErrorCode, LinkFlow, LinkOptions,
-  LinkResult
+  ConsentErrorType,
+  LinkError,
+  LinkErrorCode,
+  LinkFlow,
+  LinkOptions,
+  LinkResult,
 };
 
 // ---------- Utilities ----------
@@ -186,7 +190,7 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
       settleErr,
       (failure) => {
         try {
-          if (failure.error_type === 'LINK_INVALID_SESSION') {
+          if (failure.error_type === 'AUTH_SESSION_INVALID') {
             keepOpenOnFailure = true;
           }
         } catch {}

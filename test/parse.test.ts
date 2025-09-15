@@ -26,9 +26,9 @@ describe('parseAuthMessage', () => {
     const ev = new MessageEvent('message', {
       data: {
         isCompleted: false,
-        error: 'LINK_INVALID_SESSION',
+        error: 'AUTH_SESSION_INVALID',
         errorID: 'err_123',
-        errorType: 'LINK_INVALID_SESSION',
+        errorType: 'AUTH_SESSION_INVALID',
         errorDescription: 'Invalid/terminal session',
         errorURI: 'https://docs/errors#LINK_INVALID_SESSION',
       },
@@ -36,9 +36,9 @@ describe('parseAuthMessage', () => {
     });
     expect(parseAuthMessage(ev)).toEqual({
       type: 'FAILED',
-      error: 'LINK_INVALID_SESSION',
+      error: 'AUTH_SESSION_INVALID',
       error_id: 'err_123',
-      error_type: 'LINK_INVALID_SESSION',
+      error_type: 'AUTH_SESSION_INVALID',
       error_description: 'Invalid/terminal session',
       error_uri: 'https://docs/errors#LINK_INVALID_SESSION',
     });
