@@ -100,7 +100,7 @@ Note: For `LINK_INVALID_SESSION`, the iframe remains mounted. You can close it p
 ## UMD / CDN Usage
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@fiskil/link@0.1.5-beta/dist/fiskil-link.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fiskil/link@0.1.8-beta/dist/fiskil-link.umd.js"></script>
 <script>
   const flow = FiskilLink.link('session_123');
   flow.then((res) => console.log('done', res)).catch(console.error);
