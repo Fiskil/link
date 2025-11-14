@@ -8,8 +8,12 @@ import type {
   LinkResult,
 } from './types';
 export type {
-  ConsentErrorType, LinkError, LinkErrorCode, LinkFlow, LinkOptions,
-  LinkResult
+  ConsentErrorType,
+  LinkError,
+  LinkErrorCode,
+  LinkFlow,
+  LinkOptions,
+  LinkResult,
 };
 
 // ---------- Utilities ----------
@@ -128,16 +132,6 @@ function removeExistingLinkIframes(scope: HTMLElement) {
       } catch {}
     });
   } catch {}
-}
-
-function teardownEmbed(
-  handler: ((event: MessageEvent) => void) | null,
-  iframe: HTMLIFrameElement | null,
-  overlay: HTMLElement | null
-) {
-  if (handler) window.removeEventListener('message', handler);
-  removeNode(iframe);
-  removeNode(overlay);
 }
 
 /**
