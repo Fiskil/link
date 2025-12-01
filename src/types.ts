@@ -3,7 +3,8 @@ export const fiskilErrors = [
   'CONSENT_ENDUSER_DENIED',
   'CONSENT_OTP_FAILURE',
   'CONSENT_ENDUSER_INELIGIBLE',
-  'CONSENT_TIMEOUT'
+  'CONSENT_TIMEOUT',
+  'AUTH_SESSION_CANCELLED',
 ] as const;
 
 export type ConsentErrorType = (typeof fiskilErrors)[number];
