@@ -45,11 +45,22 @@ function mountContainer(): {
 
 function createMessageHandler(
   allowedOrigin: string,
+  expectedSource: Window | null,
   resolve: (value: LinkResult) => void,
   reject: (error: any) => void,
   onFailed?: (failure: Extract<ParsedAuthMessage, { type: 'FAILED' }>) => void
 ) {
   return function onMessage(event: MessageEvent) {
+    // Only accept messages coming from the Link iframe window.
+    // This prevents unrelated postMessage traffic (Vite/HMR, widgets, extensions, etc.)
+    // from causing false failures.
+    if (expectedSource && event.source !== expectedSource) return;
+
+    // Ignore non-Link protocol messages entirely.
+    const parsed = parseAuthMessage(event);
+    if (!parsed) return;
+
+    // For Link protocol messages, enforce the expected origin for security.
     if (event.origin !== allowedOrigin) {
       // Explicitly surface unexpected origins to aid integrators
       reject(
@@ -66,9 +77,6 @@ function createMessageHandler(
       );
       return;
     }
-
-    const parsed = parseAuthMessage(event);
-    if (!parsed) return;
 
     if (parsed.type === 'COMPLETED') {
       resolve({ redirectURL: parsed.redirectURL, consentID: parsed.consentID });
@@ -174,8 +182,10 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
     }
     rejectRef = settleErr;
 
+    const expectedSource = iframe.contentWindow;
     messageHandler = createMessageHandler(
       allowedOrigin,
+      expectedSource,
       settleOk,
       settleErr,
       (failure) => {
