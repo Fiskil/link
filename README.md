@@ -52,7 +52,6 @@ Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, whic
 
 | Option          | Type   | Description  |
 | --------------- | ------ | --------------------------- |
-| `allowedOrigin` | string | Restrict postMessage origin (recommended in production). |
 | `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min) |
 
 ### Result
