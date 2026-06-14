@@ -29,9 +29,21 @@ export type LinkResult = {
   consentID?: string;
 };
 
+// Options for customising the link behaviour
 export type LinkOptions = {
+  /**
+  * Origin to allow for incoming iframe messages. Should not be changed unless
+  * you are modifying \@fiskil/link itself
+  */
   allowedOrigin?: string;
+  /**
+  * The Fiskil authorization server. Should not be changed unless you are
+  * modifying \@fiskil/link itself
+  */
   authServer?: string;
+  /**
+  * Maximum amount of time to allow for the end-user's authentication
+  */
   timeoutMs?: number;
 };
 
