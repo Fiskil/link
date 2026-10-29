@@ -24,14 +24,14 @@ Note that to use this SDK, you’ll need a Fiskil team account. If you don't hav
 Before launching the consent flow, your backend must [create an Auth Session](https://docs.fiskil.com/auth-session#create-auth-session) through the Fiskil API. Pass the resulting `auth_session_id` into the SDK to start the flow in your application.
 
 ```ts
-import { link } from '@fiskil/link';
+import { link, type LinkError } from '@fiskil/link';
 
 // Start the consent flow
 const flow = link('auth_session_id');
 
 try {
   const result = await flow;
-  console.log(result.consentID);
+  console.log(result.consents);
 } catch (err) {
   const linkError = err as LinkError;
   console.log('Link Error code:', linkError.code);
@@ -61,12 +61,28 @@ The `LinkFlow` resolves with the success payload:
 ```ts
 type LinkResult = {
   redirectURL?: string;
-  consentID?: string;
+  consents: string[];
 };
 ```
 
-- Resolved result includes `redirectURL` (as configured) and a `consentID` which can be used to fetch user data from fiskil platform.
-- On failure, the promise rejects with a `LinkError` (see Error Handling).
+- `consents` is an array of consent ID strings. A session with one consent returns one entry. `redirectURL` is optional.
+- Use webhooks to check when data is ready to fetch.
+- If the flow fails, the promise rejects with a `LinkError` (see Error Handling).
+
+### Migrating to 1.0.0
+
+**Breaking change:** replace `result.consentID` with `result.consents` and handle each returned ID.
+`redirectURL` remains optional.
+
+Legacy completion messages are still accepted and normalised to `consents: [consentID]`.
+The public result always uses `consents`.
+
+Completion requires at least one non-blank string ID. If `consents` is present but invalid,
+the SDK does not fall back to `consentID`. Invalid completion messages are ignored while
+waiting for a valid result or timeout.
+
+The SDK automatically includes its package version in the iframe URL as `sdkVersion`;
+no additional configuration is required.
 
 ### Error Handling
 
@@ -99,7 +115,7 @@ Note: For `LINK_INVALID_SESSION`, the iframe remains mounted. You can close it p
 ## UMD / CDN Usage
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@fiskil/link@0.1.8-beta/dist/fiskil-link.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fiskil/link@1.0.0/dist/fiskil-link.umd.js"></script>
 <script>
   const flow = FiskilLink.link('session_123');
   flow.then((res) => console.log('done', res)).catch(console.error);

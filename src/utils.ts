@@ -61,7 +61,7 @@ export type ParsedAuthMessage =
   | {
       type: 'COMPLETED';
       redirectURL?: string;
-      consentID?: string;
+      consents: string[];
     }
   | {
       type: 'FAILED';
@@ -82,7 +82,8 @@ export function parseAuthMessage(
     errorDescription?: string;
     errorURI?: string;
     redirectURL?: string;
-    consentID?: string;
+    consents?: unknown;
+    consentID?: unknown;
     isCompleted: boolean;
   } = event.data;
 
@@ -98,6 +99,7 @@ export function parseAuthMessage(
       errorDescription,
       errorURI,
       redirectURL,
+      consents,
       consentID,
     } = data;
 
@@ -126,13 +128,21 @@ export function parseAuthMessage(
       }
     }
 
-    // Check if completion params are present
-    if (data.isCompleted === true && consentID) {
-      return {
-        type: 'COMPLETED',
-        redirectURL: redirectURL,
-        consentID: consentID,
-      };
+    // A present but malformed new-format field must never fall back to legacy.
+    if (data.isCompleted === true) {
+      if ('consents' in data) {
+        if (
+          Array.isArray(consents) &&
+          consents.length > 0 &&
+          Array.from(consents).every(
+            (id): id is string => typeof id === 'string' && id.trim().length > 0
+          )
+        ) {
+          return { type: 'COMPLETED', redirectURL, consents };
+        }
+      } else if (typeof consentID === 'string' && consentID.trim().length > 0) {
+        return { type: 'COMPLETED', redirectURL, consents: [consentID] };
+      }
     }
   }
 
