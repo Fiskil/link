@@ -52,7 +52,11 @@ Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, whic
 
 | Option          | Type   | Description  |
 | --------------- | ------ | --------------------------- |
-| `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min) |
+| `timeoutMs`     | number | Maximum duration of the entire flow, including OTP entry. Defaults to `600000` (10 minutes). |
+| `authServer`    | string | Advanced development/testing override for the authorization URL. Defaults to `https://auth.fiskil.com`. |
+| `allowedOrigin` | string | Advanced development/testing override for the expected message origin. Defaults to the origin of `authServer`. |
+
+Keep the URL and origin defaults for standard integrations.
 
 ### Result
 
@@ -101,16 +105,19 @@ interface LinkError extends Error {
 | `LINK_NOT_FOUND`                    | Container element not found in DOM                    |
 | `LINK_TIMEOUT`                      | Flow exceeded timeout duration specified in options    |
 | `LINK_USER_CANCELLED`               | User cancelled or flow was closed programmatically     |
-| `LINK_ORIGIN_MISMATCH`              | Message received from unexpected origin               |
+| `LINK_ORIGIN_MISMATCH`              | A recognised Link message from the iframe has an unexpected origin; this is not a page-load or navigation check |
 | `LINK_INTERNAL_ERROR`               | Unrecognized error encountered during the consent flow |
-| `LINK_INVALID_SESSION`              | The specified auth session is invalid                  |
+| `LINK_INVALID_SESSION`              | Legacy invalid-session error                          |
+| `AUTH_SESSION_INVALID`              | Auth session is invalid or has ended                  |
+| `AUTH_SESSION_CANCELLED`            | Auth session was cancelled                            |
 | `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent flow          |
 | `CONSENT_ENDUSER_DENIED`            | User denied consent during consent flow                |
 | `CONSENT_OTP_FAILURE`               | OTP verification failed during consent flow             |
 | `CONSENT_ENDUSER_INELIGIBLE`        | User is ineligible for data sharing                   |
 | `CONSENT_TIMEOUT`                   | Consent process timed out                             |
 
-Note: For `LINK_INVALID_SESSION`, the iframe remains mounted. You can close it programmatically with `.close()`.
+`AUTH_SESSION_INVALID` rejects and removes the iframe. The legacy `LINK_INVALID_SESSION`
+behaviour is unchanged: it rejects but leaves the iframe mounted until `.close()` is called.
 
 ## UMD / CDN Usage
 

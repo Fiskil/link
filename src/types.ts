@@ -5,6 +5,7 @@ export const fiskilErrors = [
   'CONSENT_ENDUSER_INELIGIBLE',
   'CONSENT_TIMEOUT',
   'AUTH_SESSION_CANCELLED',
+  'AUTH_SESSION_INVALID',
 ] as const;
 
 export type ConsentErrorType = (typeof fiskilErrors)[number];
@@ -32,18 +33,19 @@ export type LinkResult = {
 // Options for customising the link behaviour
 export type LinkOptions = {
   /**
-  * Origin to allow for incoming iframe messages. Should not be changed unless
-  * you are modifying \@fiskil/link itself
-  */
+   * Advanced SDK development/testing override for the expected message origin.
+   * Defaults to the origin of authServer.
+   */
   allowedOrigin?: string;
   /**
-  * The Fiskil authorization server. Should not be changed unless you are
-  * modifying \@fiskil/link itself
-  */
+   * Advanced SDK development/testing override for the authorization URL.
+   * Defaults to https://auth.fiskil.com.
+   */
   authServer?: string;
   /**
-  * Maximum amount of time to allow for the end-user's authentication
-  */
+   * Maximum duration of the entire flow, including OTP entry, in milliseconds.
+   * Defaults to 600000 (10 minutes).
+   */
   timeoutMs?: number;
 };
 

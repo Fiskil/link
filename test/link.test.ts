@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { version } from '../package.json';
-import { link, type LinkFlow, type LinkOptions } from '../src';
+import { link, type LinkErrorCode, type LinkFlow, type LinkOptions } from '../src';
 
 const flows: LinkFlow[] = [];
 const frame = () => document.querySelector<HTMLIFrameElement>('iframe[data-fiskil-link-iframe]')!;
@@ -77,6 +77,34 @@ describe('link', () => {
     const flow = start();
     flow.close();
     await expect(flow).rejects.toMatchObject({ code: 'LINK_USER_CANCELLED' });
+    expect(document.getElementById('fiskil-link-overlay')).toBeNull();
+  });
+
+  it('rejects a relative cancellation URL with its original error code and details', async () => {
+    const flow = start();
+    const params = new URLSearchParams({
+      error_type: 'AUTH_SESSION_CANCELLED',
+      error_id: 'id+1',
+      error_description: 'Cancelled & retry',
+    });
+    post({ isCompleted: false, redirectURL: `/cancel?${params}` });
+    await expect(flow).rejects.toMatchObject({
+      code: 'AUTH_SESSION_CANCELLED',
+      details: { error_id: 'id+1', error_description: 'Cancelled & retry' },
+    });
+    expect(document.getElementById('fiskil-link-overlay')).toBeNull();
+  });
+
+  it.each(['flat', 'redirect'] as const)('closes after a %s AUTH_SESSION_INVALID error', async format => {
+    const code: LinkErrorCode = 'AUTH_SESSION_INVALID';
+    const flow = start({ timeoutMs: 100 });
+    post({
+      isCompleted: false,
+      ...(format === 'flat'
+        ? { error: 'Invalid session', errorType: code }
+        : { redirectURL: `/cancel?error_type=${code}` }),
+    });
+    await expect(flow).rejects.toMatchObject({ code });
     expect(document.getElementById('fiskil-link-overlay')).toBeNull();
   });
 
