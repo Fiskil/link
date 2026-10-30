@@ -33,19 +33,18 @@ export type LinkResult = {
 // Options for customising the link behaviour
 export type LinkOptions = {
   /**
-   * Advanced SDK development/testing override for the expected message origin.
-   * Defaults to the origin of authServer.
-   */
+  * Origin to allow for incoming iframe messages. Should not be changed unless
+  * you are modifying \@fiskil/link itself
+  */
   allowedOrigin?: string;
   /**
-   * Advanced SDK development/testing override for the authorization URL.
-   * Defaults to https://auth.fiskil.com.
-   */
+  * The Fiskil authorization server. Should not be changed unless you are
+  * modifying \@fiskil/link itself
+  */
   authServer?: string;
   /**
-   * Maximum duration of the entire flow, including OTP entry, in milliseconds.
-   * Defaults to 600000 (10 minutes).
-   */
+  * Maximum amount of time to allow for the end-user's authentication
+  */
   timeoutMs?: number;
 };
 

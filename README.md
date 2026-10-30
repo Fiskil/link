@@ -52,11 +52,7 @@ Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, whic
 
 | Option          | Type   | Description  |
 | --------------- | ------ | --------------------------- |
-| `timeoutMs`     | number | Maximum duration of the entire flow, including OTP entry. Defaults to `600000` (10 minutes). |
-| `authServer`    | string | Advanced development/testing override for the authorization URL. Defaults to `https://auth.fiskil.com`. |
-| `allowedOrigin` | string | Advanced development/testing override for the expected message origin. Defaults to the origin of `authServer`. |
-
-Keep the URL and origin defaults for standard integrations.
+| `timeoutMs`     | number | Maximum time for the consent flow, in milliseconds. Defaults to `600000` (10 minutes). |
 
 ### Result
 
@@ -69,24 +65,18 @@ type LinkResult = {
 };
 ```
 
-- `consents` is an array of consent ID strings. A session with one consent returns one entry. `redirectURL` is optional.
-- Use webhooks to check when data is ready to fetch.
-- If the flow fails, the promise rejects with a `LinkError` (see Error Handling).
+- Resolved result includes `redirectURL` (if configured) and `consents`, an array of consent IDs that can be used to fetch user data from the Fiskil platform.
+- On failure, the promise rejects with a `LinkError` (see Error Handling).
+
+Completion messages must contain one or more non-blank string IDs. Invalid `consents` are ignored without falling back to `consentID`; the SDK waits for a valid result or timeout.
 
 ### Migrating to 1.0.0
 
-**Breaking change:** replace `result.consentID` with `result.consents` and handle each returned ID.
-`redirectURL` remains optional.
+**Breaking change:** replace `result.consentID` with `result.consents`, an array of consent IDs, and handle each ID. `redirectURL` remains optional.
 
-Legacy completion messages are still accepted and normalised to `consents: [consentID]`.
-The public result always uses `consents`.
+Legacy completion messages are still supported: the SDK converts `consentID` to `consents: [consentID]`.
 
-Completion requires at least one non-blank string ID. If `consents` is present but invalid,
-the SDK does not fall back to `consentID`. Invalid completion messages are ignored while
-waiting for a valid result or timeout.
-
-The SDK automatically includes its package version in the iframe URL as `sdkVersion`;
-no additional configuration is required.
+The SDK adds its package version to the iframe URL as `sdkVersion`. No configuration is required.
 
 ### Error Handling
 
@@ -105,10 +95,10 @@ interface LinkError extends Error {
 | `LINK_NOT_FOUND`                    | Container element not found in DOM                    |
 | `LINK_TIMEOUT`                      | Flow exceeded timeout duration specified in options    |
 | `LINK_USER_CANCELLED`               | User cancelled or flow was closed programmatically     |
-| `LINK_ORIGIN_MISMATCH`              | A recognised Link message from the iframe has an unexpected origin; this is not a page-load or navigation check |
+| `LINK_ORIGIN_MISMATCH`              | Message received from unexpected origin               |
 | `LINK_INTERNAL_ERROR`               | Unrecognized error encountered during the consent flow |
-| `LINK_INVALID_SESSION`              | Legacy invalid-session error                          |
-| `AUTH_SESSION_INVALID`              | Auth session is invalid or has ended                  |
+| `LINK_INVALID_SESSION`              | The specified auth session is invalid                  |
+| `AUTH_SESSION_INVALID`              | Auth session is invalid                               |
 | `AUTH_SESSION_CANCELLED`            | Auth session was cancelled                            |
 | `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent flow          |
 | `CONSENT_ENDUSER_DENIED`            | User denied consent during consent flow                |
@@ -116,8 +106,8 @@ interface LinkError extends Error {
 | `CONSENT_ENDUSER_INELIGIBLE`        | User is ineligible for data sharing                   |
 | `CONSENT_TIMEOUT`                   | Consent process timed out                             |
 
-`AUTH_SESSION_INVALID` rejects and removes the iframe. The legacy `LINK_INVALID_SESSION`
-behaviour is unchanged: it rejects but leaves the iframe mounted until `.close()` is called.
+Note: For `LINK_INVALID_SESSION`, the iframe remains mounted. You can close it programmatically with `.close()`.
+For `AUTH_SESSION_INVALID`, the iframe is removed when the promise rejects.
 
 ## UMD / CDN Usage
 
