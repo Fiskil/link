@@ -24,14 +24,14 @@ Note that to use this SDK, you’ll need a Fiskil team account. If you don't hav
 Before launching the consent flow, your backend must [create an Auth Session](https://docs.fiskil.com/auth-session#create-auth-session) through the Fiskil API. Pass the resulting `auth_session_id` into the SDK to start the flow in your application.
 
 ```ts
-import { link } from '@fiskil/link';
+import { link, type LinkError } from '@fiskil/link';
 
 // Start the consent flow
 const flow = link('auth_session_id');
 
 try {
   const result = await flow;
-  console.log(result.consentID);
+  console.log(result.consents);
 } catch (err) {
   const linkError = err as LinkError;
   console.log('Link Error code:', linkError.code);
@@ -52,7 +52,7 @@ Creates and mounts the consent UI element. Returns a **`LinkFlow`** object, whic
 
 | Option          | Type   | Description  |
 | --------------- | ------ | --------------------------- |
-| `timeoutMs`     | number | Rejects if no message received within this time. defaults to `600000` (10 min) |
+| `timeoutMs`     | number | Maximum time for the consent flow, in milliseconds. Defaults to `600000` (10 minutes). |
 
 ### Result
 
@@ -61,12 +61,22 @@ The `LinkFlow` resolves with the success payload:
 ```ts
 type LinkResult = {
   redirectURL?: string;
-  consentID?: string;
+  consents: string[];
 };
 ```
 
-- Resolved result includes `redirectURL` (as configured) and a `consentID` which can be used to fetch user data from fiskil platform.
+- Resolved result includes `redirectURL` (if configured) and `consents`, an array of consent IDs that can be used to fetch user data from the Fiskil platform.
 - On failure, the promise rejects with a `LinkError` (see Error Handling).
+
+Completion messages must contain one or more non-blank string IDs. Invalid `consents` are ignored without falling back to `consentID`; the SDK waits for a valid result or timeout.
+
+### Migrating to 1.0.0
+
+**Breaking change:** replace `result.consentID` with `result.consents`, an array of consent IDs, and handle each ID. `redirectURL` remains optional.
+
+Legacy completion messages are still supported: the SDK converts `consentID` to `consents: [consentID]`.
+
+The SDK adds its package version to the iframe URL as `sdkVersion`. No configuration is required.
 
 ### Error Handling
 
@@ -88,6 +98,8 @@ interface LinkError extends Error {
 | `LINK_ORIGIN_MISMATCH`              | Message received from unexpected origin               |
 | `LINK_INTERNAL_ERROR`               | Unrecognized error encountered during the consent flow |
 | `LINK_INVALID_SESSION`              | The specified auth session is invalid                  |
+| `AUTH_SESSION_INVALID`              | Auth session is invalid                               |
+| `AUTH_SESSION_CANCELLED`            | Auth session was cancelled                            |
 | `CONSENT_UPSTREAM_PROCESSING_ERROR` | Upstream processing error during consent flow          |
 | `CONSENT_ENDUSER_DENIED`            | User denied consent during consent flow                |
 | `CONSENT_OTP_FAILURE`               | OTP verification failed during consent flow             |
@@ -95,11 +107,12 @@ interface LinkError extends Error {
 | `CONSENT_TIMEOUT`                   | Consent process timed out                             |
 
 Note: For `LINK_INVALID_SESSION`, the iframe remains mounted. You can close it programmatically with `.close()`.
+For `AUTH_SESSION_INVALID`, the iframe is removed when the promise rejects.
 
 ## UMD / CDN Usage
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@fiskil/link@0.1.8-beta/dist/fiskil-link.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fiskil/link@1.0.0/dist/fiskil-link.umd.js"></script>
 <script>
   const flow = FiskilLink.link('session_123');
   flow.then((res) => console.log('done', res)).catch(console.error);
