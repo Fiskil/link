@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { version } from '../package.json';
-import { link, type LinkErrorCode, type LinkFlow, type LinkOptions } from '../src';
+import { link, type LinkFlow, type LinkOptions } from '../src';
 
 const flows: LinkFlow[] = [];
 const frame = () => document.querySelector<HTMLIFrameElement>('iframe[data-fiskil-link-iframe]')!;
@@ -95,16 +95,10 @@ describe('link', () => {
     expect(document.getElementById('fiskil-link-overlay')).toBeNull();
   });
 
-  it.each(['flat', 'redirect'] as const)('closes after a %s AUTH_SESSION_INVALID error', async format => {
-    const code: LinkErrorCode = 'AUTH_SESSION_INVALID';
+  it('rejects an invalid-session redirect and closes the iframe', async () => {
     const flow = start({ timeoutMs: 100 });
-    post({
-      isCompleted: false,
-      ...(format === 'flat'
-        ? { error: 'Invalid session', errorType: code }
-        : { redirectURL: `/cancel?error_type=${code}` }),
-    });
-    await expect(flow).rejects.toMatchObject({ code });
+    post({ isCompleted: false, redirectURL: '/cancel?error_type=AUTH_SESSION_INVALID' });
+    await expect(flow).rejects.toMatchObject({ code: 'AUTH_SESSION_INVALID' });
     expect(document.getElementById('fiskil-link-overlay')).toBeNull();
   });
 

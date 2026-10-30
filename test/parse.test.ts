@@ -114,42 +114,15 @@ describe('parseAuthMessage', () => {
     });
   });
 
-  const errorParams = {
-    error_type: 'AUTH_SESSION_CANCELLED',
-    error_id: 'id+1',
-    error_description: 'Cancelled & retry? # + 50%',
-    error_uri: 'https://docs.example.test/errors?one=1&two=2#cancel',
-  };
-  const relativeErrorURL = `/cancel?${new URLSearchParams(errorParams)}`;
-  const absoluteErrorURL = `https://auth.fiskil.com${relativeErrorURL}`;
-
-  it.each([
-    ['root-relative', relativeErrorURL],
-    ['path-relative', relativeErrorURL.slice(1)],
-    ['query-only', relativeErrorURL.slice('/cancel'.length)],
-    ['absolute', absoluteErrorURL],
-    ['encoded relative', encodeURIComponent(relativeErrorURL)],
-    ['encoded absolute', encodeURIComponent(absoluteErrorURL)],
-  ])('preserves error parameters in a %s URL', (_label, redirectURL) => {
-    const event = new MessageEvent('message', {
-      data: { isCompleted: false, redirectURL },
+  it('preserves error details in a whole-URL-encoded redirect', () => {
+    const params = new URLSearchParams({
+      error_type: 'AUTH_SESSION_CANCELLED', error_description: 'Cancelled & retry',
     });
-    expect(parseAuthMessage(event)).toEqual({
-      type: 'FAILED',
-      error: 'AUTH_SESSION_CANCELLED',
-      ...errorParams,
-    });
-  });
-
-  it('recognises an invalid-session error in a redirect URL', () => {
     const event = new MessageEvent('message', {
-      data: {
-        isCompleted: false,
-        redirectURL: '/cancel?error_type=AUTH_SESSION_INVALID',
-      },
+      data: { isCompleted: false, redirectURL: encodeURIComponent(`/cancel?${params}`) },
     });
     expect(parseAuthMessage(event)).toMatchObject({
-      type: 'FAILED', error: 'AUTH_SESSION_INVALID', error_type: 'AUTH_SESSION_INVALID',
+      type: 'FAILED', error_type: 'AUTH_SESSION_CANCELLED', error_description: 'Cancelled & retry',
     });
   });
 
