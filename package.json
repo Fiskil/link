@@ -30,6 +30,7 @@
     "tsup": "^8.0.1",
     "typescript": "^5.5.4",
     "vitest": "^4.1.12",
+    "vite": "^7.3.7",
     "@types/node": "^22.5.4",
     "@types/jsdom": "^21.1.7",
     "jsdom": "^29.1.1"
