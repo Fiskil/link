@@ -22,17 +22,16 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "clean": "rimraf dist",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
     "tsup": "^8.0.1",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5",
+    "vitest": "^4.1.12",
     "@types/node": "^22.5.4",
     "@types/jsdom": "^21.1.7",
-    "jsdom": "^29.1.1",
-    "rimraf": "^6.0.1"
+    "jsdom": "^29.1.1"
   }
 }
