@@ -26,7 +26,7 @@ export interface LinkError extends Error {
 
 export type LinkResult = {
   redirectURL?: string;
-  consentID?: string;
+  consents: string[];
 };
 
 // Options for customising the link behaviour
