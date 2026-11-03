@@ -80,6 +80,28 @@ describe('link', () => {
     expect(document.getElementById('fiskil-link-overlay')).toBeNull();
   });
 
+  it('rejects a relative cancellation URL with its original error code and details', async () => {
+    const flow = start();
+    const params = new URLSearchParams({
+      error_type: 'AUTH_SESSION_CANCELLED',
+      error_id: 'id+1',
+      error_description: 'Cancelled & retry',
+    });
+    post({ isCompleted: false, redirectURL: `/cancel?${params}` });
+    await expect(flow).rejects.toMatchObject({
+      code: 'AUTH_SESSION_CANCELLED',
+      details: { error_id: 'id+1', error_description: 'Cancelled & retry' },
+    });
+    expect(document.getElementById('fiskil-link-overlay')).toBeNull();
+  });
+
+  it('rejects an invalid-session redirect and closes the iframe', async () => {
+    const flow = start({ timeoutMs: 100 });
+    post({ isCompleted: false, redirectURL: '/cancel?error_type=AUTH_SESSION_INVALID' });
+    await expect(flow).rejects.toMatchObject({ code: 'AUTH_SESSION_INVALID' });
+    expect(document.getElementById('fiskil-link-overlay')).toBeNull();
+  });
+
   it('closes an invalid-session frame after the promise has rejected', async () => {
     const flow = start();
     const retained = frame();

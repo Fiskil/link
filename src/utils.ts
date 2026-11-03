@@ -18,7 +18,8 @@ const fiskilErrorPattern = new RegExp(fiskilErrors.join('|'));
 
 function decodeUrlIfEncoded(input: string): string {
   const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(input);
-  if (hasScheme) return input;
+  // Preserve query escaping; decode only whole-URL encodings.
+  if (hasScheme || input.includes('?')) return input;
   try {
     return decodeURIComponent(input);
   } catch {
@@ -35,7 +36,7 @@ function extractErrorParams(url: string): {
 } | null {
   try {
     const normalized = decodeUrlIfEncoded(url);
-    const u = new URL(normalized);
+    const u = new URL(normalized, 'https://auth.fiskil.com');
     const err = u.searchParams.get('error') ?? undefined;
     const error_type = u.searchParams.get('error_type') as LinkErrorCode | null;
     const error_id = u.searchParams.get('error_id') ?? undefined;

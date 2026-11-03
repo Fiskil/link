@@ -114,6 +114,18 @@ describe('parseAuthMessage', () => {
     });
   });
 
+  it('preserves error details in a whole-URL-encoded redirect', () => {
+    const params = new URLSearchParams({
+      error_type: 'AUTH_SESSION_CANCELLED', error_description: 'Cancelled & retry',
+    });
+    const event = new MessageEvent('message', {
+      data: { isCompleted: false, redirectURL: encodeURIComponent(`/cancel?${params}`) },
+    });
+    expect(parseAuthMessage(event)).toMatchObject({
+      type: 'FAILED', error_type: 'AUTH_SESSION_CANCELLED', error_description: 'Cancelled & retry',
+    });
+  });
+
   it('parses error envelope (redirectURL with query params)', () => {
     const ev = new MessageEvent('message', {
       data: { error: 'Some error' },
