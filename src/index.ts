@@ -150,16 +150,18 @@ function removeExistingLinkIframes(scope: HTMLElement) {
  * Returns a controller and a promise that settles on completion/cancel.
  */
 export function link(sessionId: string, options?: LinkOptions): LinkFlow {
-  const mounted = mountContainer();
-  let overlayContainer: HTMLElement | null = mounted.overlayContainer;
-  const container = mounted.container;
   // Construct auth URL (allow override for local/staging)
   const defaultOrigin = 'https://auth.fiskil.com';
   const baseOrigin = options?.authServer ?? defaultOrigin;
-  const authUrl = new URL(baseOrigin);
+  // Parsed before the overlay is added, so an invalid value leaves nothing on the page.
+  const authUrl = new URL(baseOrigin, window.location.href);
   authUrl.searchParams.set('sess_id', sessionId);
   authUrl.searchParams.set('sdkVersion', __SDK_VERSION__);
   const allowedOrigin = options?.allowedOrigin ?? authUrl.origin;
+
+  const mounted = mountContainer();
+  let overlayContainer: HTMLElement | null = mounted.overlayContainer;
+  const container = mounted.container;
 
   // Create iframe
   removeExistingLinkIframes(container);
