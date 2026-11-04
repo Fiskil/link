@@ -57,6 +57,13 @@ describe('link', () => {
     expect(document.getElementById('fiskil-link-overlay')).toBeNull();
   });
 
+  it('rejects a completion without valid consent IDs', async () => {
+    const flow = start();
+    post({ isCompleted: true, consents: [] });
+    await expect(flow).rejects.toMatchObject({ code: 'LINK_INTERNAL_ERROR' });
+    expect(document.getElementById('fiskil-link-overlay')).toBeNull();
+  });
+
   it('ignores completion messages from another window and still times out', async () => {
     vi.useFakeTimers();
     const flow = start({ timeoutMs: 100 });
