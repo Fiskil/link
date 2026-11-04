@@ -68,7 +68,7 @@ type LinkResult = {
 - Resolved result includes `redirectURL` (if configured) and `consents`, an array of consent IDs that can be used to fetch user data from the Fiskil platform.
 - On failure, the promise rejects with a `LinkError` (see Error Handling).
 
-Completion messages must contain one or more non-blank string IDs. Invalid `consents` are ignored without falling back to `consentID`; the SDK waits for a valid result or timeout.
+Completion messages must contain one or more non-blank string IDs. A completion without valid IDs rejects with `LINK_INTERNAL_ERROR`. Invalid `consents` never fall back to `consentID`.
 
 ### Migrating to 1.0.0
 
