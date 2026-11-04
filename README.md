@@ -96,7 +96,7 @@ interface LinkError extends Error {
 | `LINK_TIMEOUT`                      | Flow exceeded timeout duration specified in options    |
 | `LINK_USER_CANCELLED`               | User cancelled or flow was closed programmatically     |
 | `LINK_ORIGIN_MISMATCH`              | Message received from unexpected origin               |
-| `LINK_INTERNAL_ERROR`               | Unrecognized error encountered during the consent flow |
+| `LINK_INTERNAL_ERROR`               | Unrecognized error encountered during the consent flow. Any original code is in `details.error_type` |
 | `LINK_INVALID_SESSION`              | The specified auth session is invalid                  |
 | `AUTH_SESSION_INVALID`              | Auth session is invalid                               |
 | `AUTH_SESSION_CANCELLED`            | Auth session was cancelled                            |
