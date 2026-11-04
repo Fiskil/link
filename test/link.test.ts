@@ -73,6 +73,15 @@ describe('link', () => {
     expect(document.getElementById('fiskil-link-overlay')).toBeNull();
   });
 
+  it.each(['SOME_NEW', ''])('reports unknown error code %j as an internal error', async (errorType) => {
+    const flow = start();
+    post({ isCompleted: false, error: 'Failed', errorType });
+    await expect(flow).rejects.toMatchObject({
+      code: 'LINK_INTERNAL_ERROR',
+      details: { error_type: errorType },
+    });
+  });
+
   it('closes a pending flow', async () => {
     const flow = start();
     flow.close();
