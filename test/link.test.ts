@@ -114,6 +114,16 @@ describe('link', () => {
     expect(document.getElementById('fiskil-link-overlay')).toBeNull();
   });
 
+  it('cancels a pending flow when a newer flow starts', async () => {
+    const previous = start();
+    const next = start();
+    await expect(previous).rejects.toMatchObject({ code: 'LINK_USER_CANCELLED' });
+    expect(frame().isConnected).toBe(true);
+    post({ isCompleted: true, consents: ['456'] });
+    await expect(next).resolves.toEqual({ consents: ['456'], redirectURL: undefined });
+    expect(document.getElementById('fiskil-link-overlay')).toBeNull();
+  });
+
   it.each(['pending', 'rejected', 'settled'] as const)(
     'does not remove a newer flow when closing an older %s flow',
     async state => {
