@@ -124,8 +124,14 @@ export function parseAuthMessage(
       const match = redirectURL.match(fiskilErrorPattern);
       if (match) {
         const details = extractErrorParams(redirectURL);
-        if (details) return { type: 'FAILED', ...details };
-        return { type: 'FAILED', error: match[0] };
+        // A merchant's success URL can contain a code as plain text.
+        const isSuccessURL =
+          data.isCompleted === true &&
+          !fiskilErrors.some((code) => code === details?.error_type);
+        if (!isSuccessURL) {
+          if (details) return { type: 'FAILED', ...details };
+          return { type: 'FAILED', error: match[0] };
+        }
       }
     }
 

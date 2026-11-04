@@ -137,6 +137,25 @@ describe('parseAuthMessage', () => {
     });
   });
 
+  it('keeps a completion when its redirect URL only mentions an error code', () => {
+    const redirectURL = 'https://merchant.test/done?ref=CONSENT_TIMEOUT';
+    const ev = new MessageEvent('message', {
+      data: { isCompleted: true, consents: ['123'], redirectURL },
+    });
+    expect(parseAuthMessage(ev)).toEqual({
+      type: 'COMPLETED',
+      consents: ['123'],
+      redirectURL,
+    });
+  });
+
+  it('still fails an incomplete message when its redirect URL mentions an error code', () => {
+    const ev = new MessageEvent('message', {
+      data: { isCompleted: false, redirectURL: 'https://merchant.test/done?ref=CONSENT_TIMEOUT' },
+    });
+    expect(parseAuthMessage(ev)).toEqual({ type: 'FAILED', error: 'CONSENT_TIMEOUT' });
+  });
+
   it('treats isCompleted=true with consent error params in redirectURL as failure', () => {
     const url =
       'https://auth.fiskil.com/cancel?error=access_denied&error_description=End-user+denied+consent+during+authorisation+inside+remote+institution.+The+end-user+should+retry+the+authorisation+and+complete+the+institution+consent+flow.&error_id=err_ce4c9fa8-4d79-4a5c-8769-8e82833bbed1&error_type=CONSENT_ENDUSER_DENIED&error_uri=https%3A%2F%2Fdata.docs.fiskil.dev%2Ferrors%23CONSENT_ENDUSER_DENIED';
