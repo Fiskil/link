@@ -5,6 +5,7 @@ export const fiskilErrors = [
   'CONSENT_ENDUSER_INELIGIBLE',
   'CONSENT_TIMEOUT',
   'AUTH_SESSION_CANCELLED',
+  'AUTH_SESSION_INVALID',
 ] as const;
 
 export type ConsentErrorType = (typeof fiskilErrors)[number];
@@ -26,7 +27,7 @@ export interface LinkError extends Error {
 
 export type LinkResult = {
   redirectURL?: string;
-  consentID?: string;
+  consents: string[];
 };
 
 // Options for customising the link behaviour
