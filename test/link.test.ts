@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { version } from '../package.json';
 import { link, type LinkFlow, type LinkOptions } from '../src';
+import { fiskilErrors } from '../src/types';
 
 const flows: LinkFlow[] = [];
 const frame = () => document.querySelector<HTMLIFrameElement>('iframe[data-fiskil-link-iframe]')!;
@@ -70,6 +71,43 @@ describe('link', () => {
     const flow = start();
     post({ isCompleted: true, consents: ['123'] }, 'https://other.example.test');
     await expect(flow).rejects.toMatchObject({ code: 'LINK_ORIGIN_MISMATCH' });
+    expect(document.getElementById('fiskil-link-overlay')).toBeNull();
+  });
+
+  it.each(['SOME_NEW', ''])('reports unknown error code %j as an internal error', async (errorType) => {
+    const flow = start();
+    post({ isCompleted: false, error: 'Failed', errorType, errorID: 'err_123', errorDescription: 'Denied & retry' });
+    await expect(flow).rejects.toMatchObject({
+      code: 'LINK_INTERNAL_ERROR',
+      message: 'Failed',
+      details: { error_type: errorType, error_id: 'err_123', error_description: 'Denied & retry' },
+    });
+    expect(document.getElementById('fiskil-link-overlay')).toBeNull();
+  });
+
+  it.each([false, true])('normalises a parsed redirect error with isCompleted=%s', async (isCompleted) => {
+    const flow = start();
+    const params = new URLSearchParams({
+      error_type: 'NEW_PROVIDER_ERROR',
+      error_id: 'id+1',
+      error_description: 'Denied & retry',
+      // The original parser already recognises this URL; detecting errors
+      // without a known-code reference is covered by the companion parser fix.
+      error_uri: 'https://docs.example.test/errors#CONSENT_TIMEOUT',
+    });
+    post({ isCompleted, consents: ['123'], redirectURL: `/cancel?${params}` });
+    await expect(flow).rejects.toMatchObject({
+      code: 'LINK_INTERNAL_ERROR',
+      message: 'NEW_PROVIDER_ERROR',
+      details: Object.fromEntries(params),
+    });
+    expect(document.getElementById('fiskil-link-overlay')).toBeNull();
+  });
+
+  it.each(fiskilErrors)('preserves the known error code %s', async (errorType) => {
+    const flow = start();
+    post({ isCompleted: false, error: 'Failed', errorType });
+    await expect(flow).rejects.toMatchObject({ code: errorType, details: { error_type: errorType } });
     expect(document.getElementById('fiskil-link-overlay')).toBeNull();
   });
 

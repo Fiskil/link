@@ -10,6 +10,7 @@ import type {
   LinkOptions,
   LinkResult,
 } from './types';
+import { linkErrors } from './types';
 export type {
   ConsentErrorType,
   LinkError,
@@ -90,7 +91,9 @@ function createMessageHandler(
       try {
         onFailed?.(parsed as Extract<ParsedAuthMessage, { type: 'FAILED' }>);
       } catch {}
-      const code: LinkErrorCode = parsed.error_type ?? 'LINK_INTERNAL_ERROR';
+      const code =
+        linkErrors.find((known) => known === parsed.error_type) ??
+        'LINK_INTERNAL_ERROR';
       reject(
         flError(code, parsed.error, {
           details: {

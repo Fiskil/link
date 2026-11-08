@@ -10,14 +10,17 @@ export const fiskilErrors = [
 
 export type ConsentErrorType = (typeof fiskilErrors)[number];
 
-export type LinkErrorCode =
-  | 'LINK_NOT_FOUND'
-  | 'LINK_TIMEOUT'
-  | 'LINK_USER_CANCELLED'
-  | 'LINK_ORIGIN_MISMATCH'
-  | 'LINK_INTERNAL_ERROR'
-  | 'LINK_INVALID_SESSION'
-  | ConsentErrorType;
+export const linkErrors = [
+  'LINK_NOT_FOUND',
+  'LINK_TIMEOUT',
+  'LINK_USER_CANCELLED',
+  'LINK_ORIGIN_MISMATCH',
+  'LINK_INTERNAL_ERROR',
+  'LINK_INVALID_SESSION',
+  ...fiskilErrors,
+] as const;
+
+export type LinkErrorCode = (typeof linkErrors)[number];
 
 export interface LinkError extends Error {
   name: 'LinkError';
