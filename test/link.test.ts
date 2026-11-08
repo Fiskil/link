@@ -47,6 +47,20 @@ describe('link', () => {
     expect(url.searchParams.getAll('sdkVersion')).toEqual([version]);
   });
 
+  it('resolves a relative auth server against the current page', async () => {
+    const flow = start({ authServer: '/consent' });
+    const url = new URL(frame().src);
+    expect(url.origin).toBe(window.location.origin);
+    expect(url.pathname).toBe('/consent');
+    post({ isCompleted: true, consents: ['123'] }, window.location.origin);
+    await expect(flow).resolves.toEqual({ consents: ['123'], redirectURL: undefined });
+  });
+
+  it('leaves nothing on the page when the auth server is invalid', () => {
+    expect(() => link('session_123', { authServer: 'http://' })).toThrow();
+    expect(document.getElementById('fiskil-link-overlay')).toBeNull();
+  });
+
   it.each([
     { payload: { consentID: '123' }, consents: ['123'] },
     { payload: { consents: ['123'] }, consents: ['123'] },
