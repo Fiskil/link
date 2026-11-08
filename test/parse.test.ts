@@ -137,6 +137,59 @@ describe('parseAuthMessage', () => {
     });
   });
 
+  it('keeps a completion when its redirect URL only mentions an error code', () => {
+    // A caller-configured callback URL; ref is not an Auth UI protocol field.
+    const redirectURL = 'https://merchant.test/done?ref=CONSENT_TIMEOUT';
+    const ev = new MessageEvent('message', {
+      data: { isCompleted: true, consents: ['123'], redirectURL },
+    });
+    expect(parseAuthMessage(ev)).toEqual({
+      type: 'COMPLETED',
+      consents: ['123'],
+      redirectURL,
+    });
+  });
+
+  it('still fails an incomplete message when its redirect URL mentions an error code', () => {
+    const ev = new MessageEvent('message', {
+      data: { isCompleted: false, redirectURL: 'https://merchant.test/done?ref=CONSENT_TIMEOUT' },
+    });
+    expect(parseAuthMessage(ev)).toEqual({ type: 'FAILED', error: 'CONSENT_TIMEOUT' });
+  });
+
+  it.each([
+    ['/cancel?error=access_denied&error_description=CONSENT_TIMEOUT', 'access_denied', undefined],
+    ['/cancel?error_type=NEW_PROVIDER_ERROR&error_uri=https%3A%2F%2Fdocs.example.test%2FCONSENT_TIMEOUT', 'NEW_PROVIDER_ERROR', 'NEW_PROVIDER_ERROR'],
+    ['https://merchant.test/cancel?error=access_denied', 'access_denied', undefined],
+    ['/cancel?error_type=NEW_PROVIDER_ERROR', 'NEW_PROVIDER_ERROR', 'NEW_PROVIDER_ERROR'],
+    [encodeURIComponent('/cancel?error_type=NEW_PROVIDER_ERROR'), 'NEW_PROVIDER_ERROR', 'NEW_PROVIDER_ERROR'],
+  ])('preserves explicit redirect errors in %s regardless of completion', (redirectURL, error, error_type) => {
+    for (const isCompleted of [false, true]) {
+      expect(parseAuthMessage(new MessageEvent('message', {
+        data: { isCompleted, consents: ['123'], redirectURL },
+      }))).toMatchObject({ type: 'FAILED', error, error_type });
+    }
+  });
+
+  it('preserves metadata-only redirect handling without introducing new failures', () => {
+    for (const isCompleted of [false, true]) {
+      const redirectURL = '/done?error_description=previous+attempt';
+      expect(parseAuthMessage(new MessageEvent('message', {
+        data: { isCompleted, consents: ['123'], redirectURL },
+      }))).toEqual(isCompleted ? { type: 'COMPLETED', consents: ['123'], redirectURL } : null);
+      expect(parseAuthMessage(new MessageEvent('message', {
+        data: { isCompleted, consents: ['123'], redirectURL: '/cancel?error_description=CONSENT_TIMEOUT' },
+      }))).toMatchObject({ type: 'FAILED', error_description: 'CONSENT_TIMEOUT' });
+    }
+  });
+
+  it('does not treat empty error parameters as explicit failures', () => {
+    const redirectURL = '/done?ref=CONSENT_TIMEOUT&error=&error_type=';
+    expect(parseAuthMessage(new MessageEvent('message', {
+      data: { isCompleted: true, consents: ['123'], redirectURL },
+    }))).toEqual({ type: 'COMPLETED', consents: ['123'], redirectURL });
+  });
+
   it('treats isCompleted=true with consent error params in redirectURL as failure', () => {
     const url =
       'https://auth.fiskil.com/cancel?error=access_denied&error_description=End-user+denied+consent+during+authorisation+inside+remote+institution.+The+end-user+should+retry+the+authorisation+and+complete+the+institution+consent+flow.&error_id=err_ce4c9fa8-4d79-4a5c-8769-8e82833bbed1&error_type=CONSENT_ENDUSER_DENIED&error_uri=https%3A%2F%2Fdata.docs.fiskil.dev%2Ferrors%23CONSENT_ENDUSER_DENIED';
