@@ -27,7 +27,7 @@ function decodeUrlIfEncoded(input: string): string {
   }
 }
 
-function extractErrorParams(url: string): {
+function extractErrorParams(url: string, allowMetadataOnly: boolean): {
   error: string;
   error_id?: string;
   error_type?: LinkErrorCode;
@@ -43,7 +43,7 @@ function extractErrorParams(url: string): {
     const error_description =
       u.searchParams.get('error_description') ?? undefined;
     const error_uri = u.searchParams.get('error_uri') ?? undefined;
-    if (error_type || err || error_id || error_description || error_uri) {
+    if (error_type || err || (allowMetadataOnly && (error_id || error_description || error_uri))) {
       return {
         error: (error_type as string) || err || 'Unknown error',
         error_type: (error_type ?? undefined) as LinkErrorCode | undefined,
@@ -122,16 +122,13 @@ export function parseAuthMessage(
     // Check if redirect URL contains error params
     if (redirectURL) {
       const match = redirectURL.match(fiskilErrorPattern);
-      if (match) {
-        const details = extractErrorParams(redirectURL);
-        // A merchant's success URL can contain a code as plain text.
-        const isSuccessURL =
-          data.isCompleted === true &&
-          !fiskilErrors.some((code) => code === details?.error_type);
-        if (!isSuccessURL) {
-          if (details) return { type: 'FAILED', ...details };
-          return { type: 'FAILED', error: match[0] };
-        }
+      // Explicit error/error_type values take precedence, even if unknown.
+      // Preserve legacy metadata-only detection without broadening it.
+      const details = extractErrorParams(redirectURL, Boolean(match));
+      if (details) return { type: 'FAILED', ...details };
+      // Incidental code text must not override a valid completion.
+      if (match && data.isCompleted !== true) {
+        return { type: 'FAILED', error: match[0] };
       }
     }
 
