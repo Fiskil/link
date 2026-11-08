@@ -108,6 +108,7 @@ interface LinkError extends Error {
 
 Note: For `LINK_INVALID_SESSION`, the iframe remains mounted. You can close it programmatically with `.close()`.
 For `AUTH_SESSION_INVALID`, the iframe is removed when the promise rejects.
+Starting a new flow cancels any flow still running: the older promise rejects with `LINK_USER_CANCELLED`.
 
 ## UMD / CDN Usage
 

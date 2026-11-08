@@ -148,6 +148,8 @@ function removeExistingLinkIframes(scope: HTMLElement) {
   } catch {}
 }
 
+let rejectActiveFlow: ((error: LinkError) => void) | undefined;
+
 /**
  * Mount the auth experience in an iframe.
  * Returns a controller and a promise that settles on completion/cancel.
@@ -165,6 +167,8 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
   const allowedOrigin = options?.allowedOrigin ?? authUrl.origin;
 
   // Create iframe
+  // Removing an older flow's iframe means nothing else would settle its promise.
+  rejectActiveFlow?.(flError('LINK_USER_CANCELLED', 'Replaced by a newer flow'));
   removeExistingLinkIframes(container);
   const iframe = document.createElement('iframe');
   iframe.src = authUrl.toString();
@@ -189,6 +193,7 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
       reject(error);
     }
     rejectRef = settleErr;
+    rejectActiveFlow = settleErr;
 
     const expectedSource = iframe.contentWindow;
     messageHandler = createMessageHandler(
