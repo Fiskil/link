@@ -41,11 +41,18 @@ describe('parseAuthMessage', () => {
     ['null', null],
     ['undefined', undefined],
     ['sparse', new Array(1)],
-  ])('ignores a completion with %s consents', (_label, consents) => {
+  ])('fails a completion with %s consents', (_label, consents) => {
     const ev = new MessageEvent('message', {
       data: { isCompleted: true, consents, consentID: 'legacy' },
     });
-    expect(parseAuthMessage(ev)).toBeNull();
+    expect(parseAuthMessage(ev)).toMatchObject({ type: 'FAILED', error: 'invalid_completion' });
+  });
+
+  it('keeps the error from a completion without valid consents', () => {
+    const ev = new MessageEvent('message', {
+      data: { isCompleted: true, consents: [], error: 'Failed' },
+    });
+    expect(parseAuthMessage(ev)).toEqual({ type: 'FAILED', error: 'Failed' });
   });
 
   it.each([undefined, '/done'])('normalises legacy completion with redirect %s', (redirectURL) => {
@@ -57,10 +64,10 @@ describe('parseAuthMessage', () => {
     });
   });
 
-  it.each([undefined, null, '', '  ', 123])('ignores invalid legacy ID %s', (consentID) => {
+  it.each([undefined, null, '', '  ', 123])('fails invalid legacy ID %s', (consentID) => {
     expect(parseAuthMessage(new MessageEvent('message', {
       data: { isCompleted: true, consentID },
-    }))).toBeNull();
+    }))).toMatchObject({ type: 'FAILED', error: 'invalid_completion' });
   });
 
   it('prefers valid consents when both formats are present', () => {

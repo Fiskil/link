@@ -147,6 +147,14 @@ export function parseAuthMessage(
       } else if (typeof consentID === 'string' && consentID.trim().length > 0) {
         return { type: 'COMPLETED', redirectURL, consents: [consentID] };
       }
+      // The consent page sends this message once, so waiting could never succeed.
+      if (typeof data.error !== 'string') {
+        return {
+          type: 'FAILED',
+          error: 'invalid_completion',
+          error_description: 'Completion message had no valid consent IDs',
+        };
+      }
     }
   }
 
