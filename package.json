@@ -1,6 +1,6 @@
 {
   "name": "@fiskil/link",
-  "version": "0.1.10",
+  "version": "1.0.0",
   "description": "Minimal TypeScript SDK for creating Fiskil auth sessions (redirect or iframe).",
   "license": "SEE LICENSE IN LICENSE.md",
   "type": "module",
@@ -22,16 +22,18 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "clean": "rimraf dist",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "pretest": "tsup",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
     "tsup": "^8.0.1",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5",
+    "vitest": "^4.1.12",
+    "vite": "^7.3.7",
     "@types/node": "^22.5.4",
     "@types/jsdom": "^21.1.7",
-    "rimraf": "^6.0.1"
+    "jsdom": "^29.1.1"
   }
 }

@@ -1,3 +1,6 @@
+// Replaced at build time with the package version.
+declare const __SDK_VERSION__: string;
+
 // ---------- Public Types ----------
 import type {
   ConsentErrorType,
@@ -7,6 +10,7 @@ import type {
   LinkOptions,
   LinkResult,
 } from './types';
+import { linkErrors } from './types';
 export type {
   ConsentErrorType,
   LinkError,
@@ -79,7 +83,7 @@ function createMessageHandler(
     }
 
     if (parsed.type === 'COMPLETED') {
-      resolve({ redirectURL: parsed.redirectURL, consentID: parsed.consentID });
+      resolve({ redirectURL: parsed.redirectURL, consents: parsed.consents });
       return;
     }
 
@@ -87,7 +91,9 @@ function createMessageHandler(
       try {
         onFailed?.(parsed as Extract<ParsedAuthMessage, { type: 'FAILED' }>);
       } catch {}
-      const code: LinkErrorCode = parsed.error_type ?? 'LINK_INTERNAL_ERROR';
+      const code =
+        linkErrors.find((known) => known === parsed.error_type) ??
+        'LINK_INTERNAL_ERROR';
       reject(
         flError(code, parsed.error, {
           details: {
@@ -153,13 +159,15 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
   // Construct auth URL (allow override for local/staging)
   const defaultOrigin = 'https://auth.fiskil.com';
   const baseOrigin = options?.authServer ?? defaultOrigin;
-  const authUrl = `${baseOrigin}?sess_id=${encodeURIComponent(sessionId)}`;
-  const allowedOrigin = options?.allowedOrigin ?? new URL(authUrl).origin;
+  const authUrl = new URL(baseOrigin);
+  authUrl.searchParams.set('sess_id', sessionId);
+  authUrl.searchParams.set('sdkVersion', __SDK_VERSION__);
+  const allowedOrigin = options?.allowedOrigin ?? authUrl.origin;
 
   // Create iframe
   removeExistingLinkIframes(container);
   const iframe = document.createElement('iframe');
-  iframe.src = authUrl;
+  iframe.src = authUrl.toString();
   iframe.setAttribute('data-fiskil-link-iframe', 'true');
   iframe.style.border = '0';
   iframe.style.width = '100%';
@@ -211,6 +219,12 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
         (rejectRef ?? (() => {}))(
           flError('LINK_USER_CANCELLED', 'Iframe flow closed by caller')
         );
+        // A retained invalid-session frame outlives the settled promise's finally.
+        // Do not remove a newer flow if this frame has already been replaced.
+        if (keepOpenOnFailure && current?.parentNode === container) {
+          removeNode(current);
+          removeNode(overlayContainer);
+        }
       } catch {}
     },
   };
@@ -219,7 +233,10 @@ export function link(sessionId: string, options?: LinkOptions): LinkFlow {
     completed,
     () => {
       if (messageHandler) window.removeEventListener('message', messageHandler);
-      if (closedByCaller || !keepOpenOnFailure) {
+      if (
+        (closedByCaller || !keepOpenOnFailure) &&
+        current?.parentNode === container
+      ) {
         removeNode(current);
         removeNode(overlayContainer);
       }

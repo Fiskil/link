@@ -18,7 +18,8 @@ const fiskilErrorPattern = new RegExp(fiskilErrors.join('|'));
 
 function decodeUrlIfEncoded(input: string): string {
   const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(input);
-  if (hasScheme) return input;
+  // Preserve query escaping; decode only whole-URL encodings.
+  if (hasScheme || input.includes('?')) return input;
   try {
     return decodeURIComponent(input);
   } catch {
@@ -26,26 +27,26 @@ function decodeUrlIfEncoded(input: string): string {
   }
 }
 
-function extractErrorParams(url: string): {
+function extractErrorParams(url: string, allowMetadataOnly: boolean): {
   error: string;
   error_id?: string;
-  error_type?: LinkErrorCode;
+  error_type?: string;
   error_description?: string;
   error_uri?: string;
 } | null {
   try {
     const normalized = decodeUrlIfEncoded(url);
-    const u = new URL(normalized);
+    const u = new URL(normalized, 'https://auth.fiskil.com');
     const err = u.searchParams.get('error') ?? undefined;
-    const error_type = u.searchParams.get('error_type') as LinkErrorCode | null;
+    const error_type = u.searchParams.get('error_type');
     const error_id = u.searchParams.get('error_id') ?? undefined;
     const error_description =
       u.searchParams.get('error_description') ?? undefined;
     const error_uri = u.searchParams.get('error_uri') ?? undefined;
-    if (error_type || err || error_id || error_description || error_uri) {
+    if (error_type || err || (allowMetadataOnly && (error_id || error_description || error_uri))) {
       return {
-        error: (error_type as string) || err || 'Unknown error',
-        error_type: (error_type ?? undefined) as LinkErrorCode | undefined,
+        error: error_type || err || 'Unknown error',
+        error_type: error_type ?? undefined,
         error_id,
         error_description,
         error_uri,
@@ -61,13 +62,13 @@ export type ParsedAuthMessage =
   | {
       type: 'COMPLETED';
       redirectURL?: string;
-      consentID?: string;
+      consents: string[];
     }
   | {
       type: 'FAILED';
       error: string;
       error_id?: string;
-      error_type?: LinkErrorCode;
+      error_type?: string;
       error_description?: string;
       error_uri?: string;
     };
@@ -82,7 +83,8 @@ export function parseAuthMessage(
     errorDescription?: string;
     errorURI?: string;
     redirectURL?: string;
-    consentID?: string;
+    consents?: unknown;
+    consentID?: unknown;
     isCompleted: boolean;
   } = event.data;
 
@@ -98,6 +100,7 @@ export function parseAuthMessage(
       errorDescription,
       errorURI,
       redirectURL,
+      consents,
       consentID,
     } = data;
 
@@ -110,7 +113,7 @@ export function parseAuthMessage(
         type: 'FAILED',
         error: error ?? 'internal error',
         error_id: errorID ?? undefined,
-        error_type: errorType as LinkErrorCode | undefined,
+        error_type: errorType,
         error_description: errorDescription ?? undefined,
         error_uri: errorURI ?? undefined,
       };
@@ -119,20 +122,31 @@ export function parseAuthMessage(
     // Check if redirect URL contains error params
     if (redirectURL) {
       const match = redirectURL.match(fiskilErrorPattern);
-      if (match) {
-        const details = extractErrorParams(redirectURL);
-        if (details) return { type: 'FAILED', ...details };
+      // Explicit error/error_type values take precedence, even if unknown.
+      // Preserve legacy metadata-only detection without broadening it.
+      const details = extractErrorParams(redirectURL, Boolean(match));
+      if (details) return { type: 'FAILED', ...details };
+      // Incidental code text must not override a valid completion.
+      if (match && data.isCompleted !== true) {
         return { type: 'FAILED', error: match[0] };
       }
     }
 
-    // Check if completion params are present
-    if (data.isCompleted === true && consentID) {
-      return {
-        type: 'COMPLETED',
-        redirectURL: redirectURL,
-        consentID: consentID,
-      };
+    // A present but malformed new-format field must never fall back to legacy.
+    if (data.isCompleted === true) {
+      if ('consents' in data) {
+        if (
+          Array.isArray(consents) &&
+          consents.length > 0 &&
+          Array.from(consents).every(
+            (id): id is string => typeof id === 'string' && id.trim().length > 0
+          )
+        ) {
+          return { type: 'COMPLETED', redirectURL, consents };
+        }
+      } else if (typeof consentID === 'string' && consentID.trim().length > 0) {
+        return { type: 'COMPLETED', redirectURL, consents: [consentID] };
+      }
     }
   }
 
